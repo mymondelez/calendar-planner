@@ -21,53 +21,30 @@
         }
 
         html, body { width: 100%; height: 100%; font-family: -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
-        
         .container { display: flex; flex-direction: column; height: 100vh; padding-top: env(safe-area-inset-top); }
 
-        /* HEADER: Mese e Anno su due righe */
         .header { padding: 20px 16px; display: flex; justify-content: space-between; align-items: flex-start; }
-        .header h1 { 
-            font-size: 28px; font-weight: 800; line-height: 1.1; 
-            display: flex; flex-direction: column; 
-        }
+        .header h1 { font-size: 28px; font-weight: 800; line-height: 1.1; display: flex; flex-direction: column; }
         .header h1 span.year { font-size: 22px; color: var(--text-secondary); font-weight: 400; }
-        
         .header-controls { display: flex; gap: 8px; align-items: center; }
         
         button { background: var(--bg-secondary); border: 1px solid var(--border-color); color: #fff; border-radius: 12px; font-weight: 600; touch-action: manipulation; }
+        button:disabled { opacity: 0.2; }
         .nav-btn { width: 48px; height: 48px; font-size: 20px; }
         .today-btn { height: 48px; padding: 0 15px; font-size: 14px; background: var(--blue); border: none; }
 
-        /* Area Calendario con Effetto Fade */
         .calendar-wrapper { flex: 1; padding: 0 12px 20px 12px; display: flex; flex-direction: column; }
-        
-        #daysContainer { 
-            transition: opacity 0.3s ease-in-out; 
-            opacity: 1;
-        }
+        #daysContainer { transition: opacity 0.2s ease-in-out; opacity: 1; }
         #daysContainer.fading { opacity: 0; }
 
         .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 10px; }
         .weekday { text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); }
 
-        /* BOX RETTANGOLARI ARMONICI */
-        .days { 
-            display: grid; 
-            grid-template-columns: repeat(7, 1fr); 
-            gap: 6px; 
-        }
-        
+        .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
         .day { 
-            aspect-ratio: 4 / 5; /* Rende il box rettangolare ma non troppo lungo */
-            background: var(--bg-secondary); 
-            border: 1px solid var(--border-color); 
-            border-radius: 10px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            position: relative; 
-            overflow: hidden;
+            aspect-ratio: 4 / 4.8; background: var(--bg-secondary); border: 1px solid var(--border-color); 
+            border-radius: 10px; display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; position: relative; overflow: hidden;
         }
         
         .day.other-month { opacity: 0.15; }
@@ -79,12 +56,11 @@
         
         .day-number { font-size: 18px; font-weight: 700; z-index: 2; }
         .day-note { 
-            position: absolute; bottom: 5px; left: 2px; right: 2px;
-            font-size: 8px; font-weight: 800; text-align: center; 
-            text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            position: absolute; bottom: 4px; left: 1px; right: 1px;
+            font-size: 7px; font-weight: 900; text-align: center; 
+            text-transform: uppercase; white-space: nowrap; overflow: hidden;
         }
 
-        /* Modale */
         .modal { 
             display: none; position: fixed; bottom: 0; left: 0; right: 0; 
             background: #1c1c1e; border-top: 1px solid #333; border-radius: 25px 25px 0 0; 
@@ -157,6 +133,21 @@
         let currentDate = new Date(2026, 0, 1);
         let selectedDate = null, selectedColor = 'none';
 
+        // --- SISTEMA AUDIO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBip() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
         function getEaster(y) {
             const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451);
             return new Date(y,Math.floor((h+l-7*m+114)/31)-1,((h+l-7*m+114)%31)+1);
@@ -165,11 +156,12 @@
         function getHolidays(y) {
             const e = getEaster(y); const a = new Date(e); a.setDate(e.getDate() + 1);
             return {
-                [`${y}-01-01`]: "Capodanno", [`${y}-01-06`]: "Epifania", [`${y}-04-25`]: "Liberazione",
-                [`${y}-05-01`]: "Lavoro", [`${y}-06-02`]: "Repubblica", [`${y}-08-15`]: "Ferragosto",
-                [`${y}-11-01`]: "Ognissanti", [`${y}-12-08`]: "Immacolata", 
-                [`${y}-12-25`]: "Natale", [`${y}-12-26`]: "S. Stefano", 
-                [getDateString(e)]: "Pasqua", [getDateString(a)]: "Angelo"
+                [`${y}-01-01`]: "CAPODANNO", [`${y}-01-06`]: "EPIFANIA", [`${y}-04-25`]: "LIBERAZ",
+                [`${y}-05-01`]: "F.LAVORO", [`${y}-06-02`]: "F.REPUBB", [`${y}-08-15`]: "FERRAGO",
+                [`${y}-11-01`]: "SANTI", [`${y}-12-08`]: "IMMACOL", 
+                [`${y}-12-25`]: "NATALE", [`${y}-12-26`]: "S.STEF", 
+                [`${y}-10-04`]: "SAN FRANC",
+                [getDateString(e)]: "PASQUA", [getDateString(a)]: "ANGELO"
             };
         }
 
@@ -177,14 +169,16 @@
 
         function renderCalendar() {
             const container = document.getElementById('daysContainer');
-            container.classList.add('fading'); // Inizia il fade out
+            container.classList.add('fading');
 
             setTimeout(() => {
                 const y = currentDate.getFullYear(), m = currentDate.getMonth();
                 const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
                 
-                // Mese e Anno su due righe
                 document.getElementById('monthHeader').innerHTML = `${names[m]} <span class="year">${y}</span>`;
+
+                // Blocco pulsante indietro
+                document.getElementById('prevBtn').disabled = (y === 2026 && m === 0);
 
                 const start = new Date(y, m, 1);
                 let gap = (start.getDay() === 0) ? 6 : start.getDay() - 1;
@@ -209,22 +203,30 @@
                     }
 
                     dayEl.innerHTML = `<div class="day-number">${iterDate.getDate()}</div><div class="day-note">${userEv?.note || hName || ""}</div>`;
-                    if (iterDate.getMonth() === m) dayEl.onclick = () => openModal(iterDate, hName);
+                    if (iterDate.getMonth() === m) dayEl.onclick = () => { playBip(); openModal(iterDate, hName); };
                     container.appendChild(dayEl);
                     cursor.setDate(cursor.getDate() + 1);
                 }
-                container.classList.remove('fading'); // Fine fade in
-            }, 150);
+                container.classList.remove('fading');
+            }, 100);
         }
 
-        // Swipe Management
+        // Swipe Management con limite Gennaio 2026
         let touchstartX = 0; let touchendX = 0;
         const swipeArea = document.getElementById('swipeArea');
         swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, false);
         swipeArea.addEventListener('touchend', e => { 
             touchendX = e.changedTouches[0].screenX; 
-            if (touchendX < touchstartX - 50) { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); }
-            if (touchendX > touchstartX + 50) { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); }
+            if (touchendX < touchstartX - 50) { // Avanti
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                playBip(); renderCalendar();
+            }
+            if (touchendX > touchstartX + 50) { // Indietro
+                if (!(currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0)) {
+                    currentDate.setMonth(currentDate.getMonth() - 1);
+                    playBip(); renderCalendar();
+                }
+            }
         }, false);
 
         function openModal(date, hName) {
@@ -251,9 +253,9 @@
         function deleteEntry() { document.getElementById('noteInput').value = ''; selectedColor = 'none'; saveEvent(); }
         function closeModal() { document.getElementById('modal').classList.remove('active'); document.getElementById('modal').style.display = 'none'; }
 
-        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); renderCalendar(); };
-        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); renderCalendar(); };
-        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); renderCalendar(); };
+        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); playBip(); renderCalendar(); };
+        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); playBip(); renderCalendar(); };
+        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); playBip(); renderCalendar(); };
 
         document.querySelectorAll('.color-opt').forEach(b => {
             b.onclick = () => { 
