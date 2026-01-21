@@ -54,11 +54,16 @@
         
         .day.other-month { opacity: 0.15; }
         
+        /* BORDO GIORNO ATTUALE */
+        .day.is-today {
+            border: 2px solid var(--blue);
+        }
+        
         .day.fixed-day-bg { background-color: var(--yellow-faded) !important; color: #fff; }
         
-        /* GIOVEDÌ: Diagonale inversa (metà inferiore destra colorata) */
+        /* GIOVEDÌ: Diagonale inversa (metà superiore sinistra colorata) */
         .day.fixed-day-half { 
-            background: linear-gradient(135deg, var(--bg-secondary) 50%, var(--yellow-faded) 50%) !important; 
+            background: linear-gradient(135deg, var(--yellow-faded) 50%, var(--bg-secondary) 50%) !important; 
             color: #fff; 
         }
 
@@ -194,6 +199,10 @@
                 const cursor = new Date(y, m, 1 - gap);
                 container.innerHTML = '';
                 const holidays = getHolidays(y);
+                
+                // Variabile per il giorno reale attuale
+                const today = new Date();
+                const todayStr = getDateString(today);
 
                 for (let i = 0; i < 42; i++) {
                     const iterDate = new Date(cursor);
@@ -205,6 +214,11 @@
                     const dayEl = document.createElement('div');
                     dayEl.className = 'day';
                     if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
+                    
+                    // Evidenzia se è oggi
+                    if (dStr === todayStr) {
+                        dayEl.classList.add('is-today');
+                    }
 
                     if (hName && !userEv?.color) {
                         dayEl.classList.add('holiday-yellow');
