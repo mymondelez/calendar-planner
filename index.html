@@ -18,7 +18,8 @@
             --bg-primary: #000000; --bg-secondary: #1c1c1e; --border-color: #333;
             --text-primary: #ffffff; --text-secondary: #888;
             --red: #ff3b30; --yellow: #ccff00; --green: #28cd41; --blue: #007aff;
-            --yellow-50: rgba(204, 255, 0, 0.5);
+            /* Giallo ultra-tenue (25% opacità) */
+            --yellow-faded: rgba(204, 255, 0, 0.25);
         }
 
         html, body { width: 100%; height: 100%; font-family: -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
@@ -50,14 +51,15 @@
         
         .day.other-month { opacity: 0.15; }
         
-        /* Sfondi 50% */
-        .day.fixed-day-bg { background-color: var(--yellow-50) !important; color: #fff; }
+        /* Sfondi Ultra-Faded */
+        .day.fixed-day-bg { background-color: var(--yellow-faded) !important; color: #fff; }
+        /* Giovedì: metà in basso colorata */
         .day.fixed-day-half { 
-            background: linear-gradient(135deg, var(--yellow-50) 50%, var(--bg-secondary) 50%) !important; 
+            background: linear-gradient(0deg, var(--yellow-faded) 50%, var(--bg-secondary) 50%) !important; 
             color: #fff; 
         }
 
-        /* Festività e Colori Manuali (100%) */
+        /* Festività e Colori Manuali (100% Pieni) */
         .day.holiday-yellow { background-color: var(--yellow) !important; color: #000; }
         .day.red { background: var(--red) !important; color: #fff; }
         .day.green { background: var(--green) !important; color: #fff; }
@@ -202,15 +204,19 @@
                     dayEl.className = 'day';
                     if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
 
-                    // Sfondi predefiniti 50% (se non c'è colore manuale)
-                    if (iterDate.getMonth() === m && !userEv?.color) {
+                    // 1. Gestione Festività (Priorità massima)
+                    if (hName && !userEv?.color) {
+                        dayEl.classList.add('holiday-yellow');
+                    } 
+                    // 2. Gestione Sfondi Faded (Solo se non è festivo e non c'è colore manuale)
+                    else if (iterDate.getMonth() === m && !userEv?.color) {
                         if ([1, 5, 6, 0].includes(dayOfWeek)) dayEl.classList.add('fixed-day-bg');
                         if (dayOfWeek === 4) dayEl.classList.add('fixed-day-half');
                     }
 
-                    // Festività e Colori Manuali (Priorità e 100%)
-                    if (hName && !userEv?.color) dayEl.classList.add('holiday-yellow');
+                    // 3. Gestione Colore Manuale
                     if (userEv?.color) {
+                        dayEl.classList.remove('fixed-day-bg', 'fixed-day-half', 'holiday-yellow');
                         if (userEv.color === 'yellow') dayEl.classList.add('manual-yellow');
                         else dayEl.classList.add(userEv.color);
                     }
@@ -270,7 +276,7 @@
             b.onclick = () => { 
                 selectedColor = b.dataset.color;
                 updateColorUI();
-                if(selectedColor === 'red') document.getElementById('noteInput').value = "Ufficio";
+                if(selectedColor === 'red') document.getElementById('noteInput').value = "UFFICIO";
             };
         });
 
