@@ -46,14 +46,10 @@
         
         .day.other-month { opacity: 0.1; }
         
-        /* Colori Automatici */
-        .day.auto-yellow { background-color: var(--yellow) !important; color: #000; }
-        .day.half-yellow { 
-            background: linear-gradient(135deg, var(--yellow) 50%, var(--bg-secondary) 50%) !important; 
-            color: #000; 
-        }
+        /* FESTIVITÀ AUTOMATICHE (Tutte Giallo Pieno) */
+        .day.holiday-yellow { background-color: var(--yellow) !important; color: #000; }
 
-        /* Colori Manuali */
+        /* COLORI MANUALI */
         .day.red { background: var(--red) !important; color: #fff; }
         .day.green { background: var(--green) !important; color: #fff; }
         .day.blue { background: var(--blue) !important; color: #fff; }
@@ -81,7 +77,7 @@
         .btn-del { flex: 1; background: #3a3a3c; color: var(--red); border-radius: 15px; border: none; }
     </style>
 </head>
-<body id="body">
+<body>
     <div class="container">
         <div class="header">
             <h1 id="monthHeader">---</h1>
@@ -171,7 +167,6 @@
             for (let i = 0; i < 42; i++) {
                 const iterDate = new Date(cursor);
                 const dStr = getDateString(iterDate);
-                const dayOfWeek = iterDate.getDay(); 
                 const hName = holidays[dStr];
                 const userEv = dayEvents[dStr];
                 
@@ -179,15 +174,12 @@
                 dayEl.className = 'day';
                 if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
 
-                // LOGICA COLORI AUTOMATICI
-                if (!userEv?.color && iterDate.getMonth() === m) {
-                    // Lun, Ven, Sab, Dom -> Giallo Pieno
-                    if ([1, 5, 6, 0].includes(dayOfWeek)) dayEl.classList.add('auto-yellow');
-                    // Gio -> Mezzo Giallo
-                    if (dayOfWeek === 4) dayEl.classList.add('half-yellow');
+                // Festività: Sempre Giallo Pieno se non c'è un colore manuale
+                if (hName && !userEv?.color) {
+                    dayEl.classList.add('holiday-yellow');
                 }
 
-                // Colori Manuali
+                // Colore Manuale (priorità)
                 if (userEv?.color) {
                     if (userEv.color === 'yellow') dayEl.classList.add('manual-yellow');
                     else dayEl.classList.add(userEv.color);
@@ -200,7 +192,7 @@
             }
         }
 
-        // Swipe Management
+        // Swipe
         let touchstartX = 0; let touchendX = 0;
         const swipeArea = document.getElementById('swipeArea');
         swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, false);
