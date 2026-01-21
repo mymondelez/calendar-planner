@@ -52,9 +52,9 @@
         .day.is-today { border: 2px solid var(--blue); }
         .day.fixed-day-bg { background-color: var(--yellow-faded) !important; color: #fff; }
         
-        /* GIOVEDÌ: Inversa (Giallo in alto a sinistra) */
+        /* GIOVEDÌ: Parte colorata in BASSO a DESTRA (Speculare a prima) */
         .day.fixed-day-half { 
-            background: linear-gradient(135deg, var(--yellow-faded) 50%, var(--bg-secondary) 50%) !important; 
+            background: linear-gradient(135deg, var(--bg-secondary) 50%, var(--yellow-faded) 50%) !important; 
             color: #fff; 
         }
 
@@ -143,7 +143,7 @@
         let currentDate = new Date(2026, 0, 1);
         let selectedDate = null, selectedColor = 'none';
 
-        // Carica dati da localStorage immediatamente come backup
+        // Caricamento immediato da localStorage
         const localData = localStorage.getItem('planner_data');
         if (localData) dayEvents = JSON.parse(localData);
 
@@ -230,10 +230,19 @@
             }, 100);
         }
 
-        // Navigazione
-        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); playBip(); renderCalendar(); };
-        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); playBip(); renderCalendar(); };
-        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); playBip(); renderCalendar(); };
+        async function saveEvent() {
+            const dStr = getDateString(selectedDate);
+            const note = document.getElementById('noteInput').value.trim();
+            const data = { color: selectedColor === 'none' ? null : selectedColor, note: note || null };
+            dayEvents[dStr] = data;
+            
+            localStorage.setItem('planner_data', JSON.stringify(dayEvents));
+            
+            if(db && currentUser) {
+                await db.collection('users').doc(currentUser.uid).collection('events').doc(dStr).set(data);
+            }
+            renderCalendar(); closeModal();
+        }
 
         function openModal(date, hName) {
             selectedDate = date;
@@ -248,30 +257,12 @@
         }
 
         function updateColorUI() { document.querySelectorAll('.color-opt').forEach(b => b.classList.toggle('selected', b.dataset.color === selectedColor)); }
-        
-        async function saveEvent() {
-            const dStr = getDateString(selectedDate);
-            const note = document.getElementById('noteInput').value.trim();
-            const data = { color: selectedColor === 'none' ? null : selectedColor, note: note || null };
-            
-            // 1. Salva in memoria locale
-            dayEvents[dStr] = data;
-            
-            // 2. Salva in LocalStorage (Permanenza sul dispositivo)
-            localStorage.setItem('planner_data', JSON.stringify(dayEvents));
-            
-            // 3. Salva in Firebase (Cloud)
-            if(db && currentUser) {
-                try {
-                    await db.collection('users').doc(currentUser.uid).collection('events').doc(dStr).set(data);
-                } catch(e) { console.log("Cloud save error, kept locally"); }
-            }
-            
-            renderCalendar(); closeModal();
-        }
-
         function deleteEntry() { document.getElementById('noteInput').value = ''; selectedColor = 'none'; saveEvent(); }
         function closeModal() { document.getElementById('modal').classList.remove('active'); document.getElementById('modal').style.display = 'none'; }
+
+        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); playBip(); renderCalendar(); };
+        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); playBip(); renderCalendar(); };
+        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); playBip(); renderCalendar(); };
 
         document.querySelectorAll('.color-opt').forEach(b => {
             b.onclick = () => { 
@@ -281,29 +272,15 @@
             };
         });
 
-        // Swipe
-        let touchstartX = 0;
-        const swipeArea = document.getElementById('swipeArea');
-        swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, false);
-        swipeArea.addEventListener('touchend', e => { 
-            let touchendX = e.changedTouches[0].screenX; 
-            if (touchendX < touchstartX - 50) { currentDate.setMonth(currentDate.getMonth() + 1); playBip(); renderCalendar(); }
-            if (touchendX > touchstartX + 50) { currentDate.setMonth(currentDate.getMonth() - 1); playBip(); renderCalendar(); }
-        }, false);
-
-        // Inizializzazione Firebase e Sincronizzazione
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         firebase.auth().signInAnonymously().then(u => {
             currentUser = u.user;
             db.collection('users').doc(currentUser.uid).collection('events').get().then(s => {
-                if(!s.empty) {
-                    s.forEach(doc => dayEvents[doc.id] = doc.data());
-                    localStorage.setItem('planner_data', JSON.stringify(dayEvents));
-                    renderCalendar();
-                }
+                s.forEach(doc => dayEvents[doc.id] = doc.data());
+                renderCalendar();
             });
-        }).catch(() => renderCalendar()); // Carica comunque i dati locali se offline
+        }).catch(() => renderCalendar());
 
         renderCalendar();
     </script>
