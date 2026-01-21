@@ -18,6 +18,7 @@
             --bg-primary: #000000; --bg-secondary: #1c1c1e; --border-color: #333;
             --text-primary: #ffffff; --text-secondary: #888;
             --red: #ff3b30; --yellow: #ccff00; --green: #28cd41; --blue: #007aff;
+            --yellow-50: rgba(204, 255, 0, 0.5);
         }
 
         html, body { width: 100%; height: 100%; font-family: -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
@@ -48,6 +49,15 @@
         }
         
         .day.other-month { opacity: 0.15; }
+        
+        /* Sfondi 50% */
+        .day.fixed-day-bg { background-color: var(--yellow-50) !important; color: #fff; }
+        .day.fixed-day-half { 
+            background: linear-gradient(135deg, var(--yellow-50) 50%, var(--bg-secondary) 50%) !important; 
+            color: #fff; 
+        }
+
+        /* Festività e Colori Manuali (100%) */
         .day.holiday-yellow { background-color: var(--yellow) !important; color: #000; }
         .day.red { background: var(--red) !important; color: #fff; }
         .day.green { background: var(--green) !important; color: #fff; }
@@ -133,19 +143,17 @@
         let currentDate = new Date(2026, 0, 1);
         let selectedDate = null, selectedColor = 'none';
 
-        // --- SISTEMA AUDIO ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBip() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
         function getEaster(y) {
@@ -156,11 +164,11 @@
         function getHolidays(y) {
             const e = getEaster(y); const a = new Date(e); a.setDate(e.getDate() + 1);
             return {
-                [`${y}-01-01`]: "CAPODANNO", [`${y}-01-06`]: "EPIFANIA", [`${y}-04-25`]: "LIBERAZ",
-                [`${y}-05-01`]: "F.LAVORO", [`${y}-06-02`]: "F.REPUBB", [`${y}-08-15`]: "FERRAGO",
+                [`${y}-01-01`]: "CAPODAN", [`${y}-01-06`]: "EPIFANIA", [`${y}-04-25`]: "LIBERAZ",
+                [`${y}-05-01`]: "F.LAVORO", [`${y}-06-02`]: "F.REPUB", [`${y}-08-15`]: "FERRAGO",
                 [`${y}-11-01`]: "SANTI", [`${y}-12-08`]: "IMMACOL", 
                 [`${y}-12-25`]: "NATALE", [`${y}-12-26`]: "S.STEF", 
-                [`${y}-10-04`]: "SAN FRANC",
+                [`${y}-10-04`]: "S.FRANC", [`${y}-06-24`]: "S.GIOVA",
                 [getDateString(e)]: "PASQUA", [getDateString(a)]: "ANGELO"
             };
         }
@@ -174,10 +182,7 @@
             setTimeout(() => {
                 const y = currentDate.getFullYear(), m = currentDate.getMonth();
                 const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-                
                 document.getElementById('monthHeader').innerHTML = `${names[m]} <span class="year">${y}</span>`;
-
-                // Blocco pulsante indietro
                 document.getElementById('prevBtn').disabled = (y === 2026 && m === 0);
 
                 const start = new Date(y, m, 1);
@@ -189,6 +194,7 @@
                 for (let i = 0; i < 42; i++) {
                     const iterDate = new Date(cursor);
                     const dStr = getDateString(iterDate);
+                    const dayOfWeek = iterDate.getDay(); 
                     const hName = holidays[dStr];
                     const userEv = dayEvents[dStr];
                     
@@ -196,6 +202,13 @@
                     dayEl.className = 'day';
                     if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
 
+                    // Sfondi predefiniti 50% (se non c'è colore manuale)
+                    if (iterDate.getMonth() === m && !userEv?.color) {
+                        if ([1, 5, 6, 0].includes(dayOfWeek)) dayEl.classList.add('fixed-day-bg');
+                        if (dayOfWeek === 4) dayEl.classList.add('fixed-day-half');
+                    }
+
+                    // Festività e Colori Manuali (Priorità e 100%)
                     if (hName && !userEv?.color) dayEl.classList.add('holiday-yellow');
                     if (userEv?.color) {
                         if (userEv.color === 'yellow') dayEl.classList.add('manual-yellow');
@@ -211,20 +224,16 @@
             }, 100);
         }
 
-        // Swipe Management con limite Gennaio 2026
+        // Swipe & Navigation
         let touchstartX = 0; let touchendX = 0;
         const swipeArea = document.getElementById('swipeArea');
         swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, false);
         swipeArea.addEventListener('touchend', e => { 
             touchendX = e.changedTouches[0].screenX; 
-            if (touchendX < touchstartX - 50) { // Avanti
-                currentDate.setMonth(currentDate.getMonth() + 1);
-                playBip(); renderCalendar();
-            }
-            if (touchendX > touchstartX + 50) { // Indietro
+            if (touchendX < touchstartX - 50) { currentDate.setMonth(currentDate.getMonth() + 1); playBip(); renderCalendar(); }
+            if (touchendX > touchstartX + 50) { 
                 if (!(currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0)) {
-                    currentDate.setMonth(currentDate.getMonth() - 1);
-                    playBip(); renderCalendar();
+                    currentDate.setMonth(currentDate.getMonth() - 1); playBip(); renderCalendar();
                 }
             }
         }, false);
