@@ -3,123 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1a1a1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Calendar Planner Pro</title>
+    <title>Calendar Planner 2026</title>
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
-        html { touch-action: manipulation; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         :root {
-            --bg-primary: #1a1a1a; --bg-secondary: #2d2d2d; --text-primary: #ffffff; --text-secondary: #999999;
-            --border-color: #404040; --red: #ff3b30; --yellow: #ffcc00; --accent: #0a84ff;
+            --bg-primary: #121212; --bg-secondary: #252525; --border-color: #3d3d3d;
+            --text-primary: #ffffff; --text-secondary: #a0a0a0;
+            /* Colori Intensi */
+            --red: #ff3b30; --yellow: #ccff00; --green: #34c759; --blue: #007aff;
         }
-        html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
+        html, body { width: 100%; height: 100%; font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
         
-        /* Layout principale che occupa tutto lo schermo */
-        .container { 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            max-width: 600px; 
-            margin: 0 auto; 
-            padding-bottom: env(safe-area-inset-bottom);
+        .container { display: flex; flex-direction: column; height: 100vh; padding-top: env(safe-area-inset-top); }
+
+        .header { padding: 20px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; font-weight: 800; }
+        .header-controls { display: flex; gap: 10px; }
+        
+        button { background: var(--bg-secondary); border: 1px solid var(--border-color); color: #fff; border-radius: 12px; font-weight: 600; cursor: pointer; }
+        .nav-btn { width: 50px; height: 50px; font-size: 22px; }
+        .today-btn { padding: 0 20px; font-size: 16px; background: var(--blue); border: none; }
+
+        .calendar-wrapper { flex: 1; display: flex; flex-direction: column; padding: 10px 12px 30px 12px; }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 10px; }
+        .weekday { text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); }
+
+        /* Griglia Bloccata: 6 righe uguali */
+        .days { 
+            flex: 1; 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            grid-template-rows: repeat(6, 1fr); 
+            gap: 8px; 
         }
         
-        /* HEADER - Più spazio verticale e respiro dal notch */
-        .header { 
-            padding: calc(25px + env(safe-area-inset-top)) 18px 20px 18px; 
-            border-bottom: 1px solid var(--border-color); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: var(--bg-primary); 
-        }
-        .header h1 { font-size: 24px; font-weight: 700; flex: 1; letter-spacing: -0.5px; }
-        
-        .header-controls { display: flex; gap: 10px; align-items: center; }
-        
-        button { 
+        .day { 
             background: var(--bg-secondary); 
             border: 1px solid var(--border-color); 
-            color: var(--text-primary); 
-            padding: 10px 16px; 
-            border-radius: 12px; 
-            font-size: 20px; 
-            font-weight: 600;
-            min-width: 55px;
-            min-height: 50px;
-        }
-        
-        .today-btn { 
-            background: var(--accent); 
-            border: none; 
-            color: white; 
-            font-size: 17px; 
-            padding: 10px 22px;
-        }
-
-        /* WRAPPER CALENDARIO - Spinto verso il basso per dare respiro */
-        .calendar-wrapper { 
-            flex: 1; 
-            display: flex;
-            flex-direction: column;
-            padding: 20px 14px; 
-            justify-content: flex-start; /* Puoi cambiare in center se lo vuoi proprio al centro */
-        }
-
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 15px; }
-        .weekday { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-
-        .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-        
-        /* Box Giorno - Più slanciati per riempire lo schermo */
-        .day { 
-            aspect-ratio: 0.8; /* Più alto per dare respiro interno */
+            border-radius: 14px; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            background-color: var(--bg-secondary); 
-            border: 1px solid var(--border-color); 
-            border-radius: 12px; 
-            padding: 8px 4px; 
-            position: relative;
-        }
-        
-        .day.other-month { opacity: 0.1; }
-        .day.red { background-color: rgba(255, 59, 48, 0.6); border-color: var(--red); }
-        .day.yellow { background-color: rgba(255, 204, 0, 0.4); border-color: var(--yellow); }
-        
-        .day-number { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        
-        .day-note { 
-            font-size: 9px; 
-            line-height: 1.2;
-            text-align: center; 
-            width: 100%;
-            font-weight: 600;
-            color: #fff;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            padding: 4px;
             overflow: hidden;
         }
+        
+        .day.other-month { opacity: 0.15; }
+        
+        /* Colori Box più intensi */
+        .day.red { background-color: var(--red); border-color: #ff6b63; }
+        .day.yellow { background-color: var(--yellow); border-color: #e6ff80; color: #000; }
+        .day.green { background-color: var(--green); border-color: #63ff8b; }
+        .day.blue { background-color: var(--blue); border-color: #5cadff; }
+        
+        .day-number { font-size: 17px; font-weight: 700; }
+        .day-note { font-size: 9px; font-weight: 800; text-align: center; margin-top: 2px; line-height: 1; }
+        .day.yellow .day-note { color: #000; }
 
-        /* MODALE */
-        .modal { display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-secondary); border-top: 1px solid var(--border-color); border-radius: 25px 25px 0 0; padding: 24px; z-index: 100; padding-bottom: max(30px, env(safe-area-inset-bottom)); }
-        .modal.active { display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
+        /* Modale */
+        .modal { 
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; 
+            background: #1c1c1e; border-top: 1px solid var(--border-color); 
+            border-radius: 30px 30px 0 0; padding: 25px; z-index: 100;
+            padding-bottom: max(30px, env(safe-area-inset-bottom));
+        }
+        .modal.active { display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .note-input { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 16px; border-radius: 12px; font-size: 18px; margin-top: 20px; outline: none; }
-        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-        .save-btn { flex: 2; background: var(--accent); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-size: 18px; }
-        .delete-btn { flex: 1; background: rgba(255, 59, 48, 0.15); color: var(--red); border: 1px solid var(--red); border-radius: 12px; }
+        .color-picker { display: flex; justify-content: space-around; margin: 25px 0; }
+        .color-opt { width: 55px; height: 55px; border-radius: 50%; border: 3px solid transparent; }
+        .color-opt.selected { border-color: white; transform: scale(1.1); }
 
-        .color-picker { display: flex; gap: 20px; justify-content: center; margin: 15px 0; }
-        .color-btn { width: 60px; height: 60px; border-radius: 50%; border: 3px solid transparent; }
-        .color-btn.selected { border-color: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
+        .note-input { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #fff; padding: 15px; border-radius: 15px; font-size: 18px; margin-bottom: 20px; outline: none; }
+        .modal-actions { display: flex; gap: 15px; }
+        .btn-save { flex: 2; background: var(--blue); padding: 18px; border-radius: 15px; border: none; font-size: 18px; font-weight: 700; color: #fff; }
+        .btn-del { flex: 1; background: rgba(255,59,48,0.2); color: var(--red); border: 1px solid var(--red); border-radius: 15px; }
     </style>
 </head>
 <body>
@@ -127,16 +89,16 @@
         <div class="header">
             <h1 id="monthHeader">---</h1>
             <div class="header-controls">
-                <button id="prevBtn">←</button>
-                <button class="today-btn" id="todayBtn">Oggi</button>
-                <button id="nextBtn">→</button>
+                <button id="prevBtn" class="nav-btn">←</button>
+                <button id="todayBtn" class="today-btn">Oggi</button>
+                <button id="nextBtn" class="nav-btn">→</button>
             </div>
         </div>
         <div class="calendar-wrapper">
             <div class="weekdays">
-                <div class="weekday">Lun</div><div class="weekday">Mar</div><div class="weekday">Mer</div>
-                <div class="weekday">Gio</div><div class="weekday">Ven</div><div class="weekday">Sab</div>
-                <div class="weekday">Dom</div>
+                <div class="weekday">LUN</div><div class="weekday">MAR</div><div class="weekday">MER</div>
+                <div class="weekday">GIO</div><div class="weekday">VEN</div><div class="weekday">SAB</div>
+                <div class="weekday">DOM</div>
             </div>
             <div class="days" id="daysContainer"></div>
         </div>
@@ -144,18 +106,20 @@
 
     <div class="modal" id="modal">
         <div style="display:flex; justify-content:space-between; align-items:center">
-            <h2 id="modalDate" style="font-size:24px">Data</h2>
-            <button onclick="closeModal()" style="background:none; border:none; color:#fff; font-size:35px; padding: 10px;">✕</button>
+            <h2 id="modalDate" style="font-size:22px">Data</h2>
+            <button onclick="closeModal()" style="background:none; border:none; color:#fff; font-size:30px">✕</button>
         </div>
         <div class="color-picker">
-            <button class="color-btn" data-color="red" style="background:var(--red)"></button>
-            <button class="color-btn" data-color="yellow" style="background:var(--yellow)"></button>
-            <button class="color-btn" data-color="none" style="background:var(--bg-primary); border: 2px dashed #666"></button>
+            <div class="color-opt" data-color="red" style="background:var(--red)"></div>
+            <div class="color-opt" data-color="yellow" style="background:var(--yellow)"></div>
+            <div class="color-opt" data-color="green" style="background:var(--green)"></div>
+            <div class="color-opt" data-color="blue" style="background:var(--blue)"></div>
+            <div class="color-opt" data-color="none" style="background:none; border:2px dashed #666"></div>
         </div>
-        <textarea id="noteInput" class="note-input" maxlength="50" placeholder="Aggiungi nota..."></textarea>
+        <textarea id="noteInput" class="note-input" placeholder="Aggiungi nota..."></textarea>
         <div class="modal-actions">
-            <button class="delete-btn" onclick="deleteEntry()">Elimina</button>
-            <button class="save-btn" onclick="saveEvent()">SALVA</button>
+            <button class="btn-del" onclick="deleteEntry()">Elimina</button>
+            <button class="btn-save" onclick="saveEvent()">SALVA</button>
         </div>
     </div>
 
@@ -175,8 +139,7 @@
 
         let db, currentUser, dayEvents = {};
         let currentDate = new Date(2026, 0, 1);
-        let selectedDate = null;
-        let selectedColor = 'none';
+        let selectedDate = null, selectedColor = 'none';
 
         function getEaster(y) {
             const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451);
@@ -185,14 +148,13 @@
         }
 
         function getHolidays(y) {
-            const e = getEaster(y);
-            const a = new Date(e); a.setDate(e.getDate() + 1);
+            const e = getEaster(y); const a = new Date(e); a.setDate(e.getDate() + 1);
             return {
                 [`${y}-01-01`]: "Capodanno", [`${y}-01-06`]: "Epifania", [`${y}-04-25`]: "Liberazione",
                 [`${y}-05-01`]: "F. Lavoro", [`${y}-06-02`]: "F. Repubbl.", [`${y}-08-15`]: "Ferragosto",
                 [`${y}-10-04`]: "S. Francesco", [`${y}-11-01`]: "Ognissanti", [`${y}-12-08`]: "Immacolata", 
                 [`${y}-12-25`]: "Natale", [`${y}-12-26`]: "S. Stefano", 
-                [getDateString(e)]: "Pasqua", [getDateString(a)]: "Lunedì Angelo"
+                [getDateString(e)]: "Pasqua", [getDateString(a)]: "Lun. Angelo"
             };
         }
 
@@ -205,7 +167,7 @@
             document.getElementById('prevBtn').disabled = (y === 2026 && m === 0);
 
             const start = new Date(y, m, 1);
-            let gap = start.getDay(); gap = (gap === 0) ? 6 : gap - 1;
+            let gap = (start.getDay() === 0) ? 6 : start.getDay() - 1;
             const cursor = new Date(y, m, 1 - gap);
             const container = document.getElementById('daysContainer');
             container.innerHTML = '';
@@ -223,9 +185,7 @@
                 if (userEv?.color) dayEl.classList.add(userEv.color);
                 else if (hName) dayEl.classList.add('yellow');
 
-                const note = userEv?.note || hName || "";
-                dayEl.innerHTML = `<div class="day-number">${iterDate.getDate()}</div><div class="day-note">${note}</div>`;
-                
+                dayEl.innerHTML = `<div class="day-number">${iterDate.getDate()}</div><div class="day-note">${userEv?.note || hName || ""}</div>`;
                 if (iterDate.getMonth() === m) dayEl.onclick = () => openModal(iterDate, hName);
                 container.appendChild(dayEl);
                 cursor.setDate(cursor.getDate() + 1);
@@ -244,7 +204,9 @@
         }
 
         function updateColorUI() {
-            document.querySelectorAll('.color-btn').forEach(b => b.classList.toggle('selected', b.dataset.color === selectedColor));
+            document.querySelectorAll('.color-opt').forEach(b => {
+                b.classList.toggle('selected', b.dataset.color === selectedColor);
+            });
         }
 
         async function saveEvent() {
@@ -267,7 +229,7 @@
             renderCalendar(); 
         };
 
-        document.querySelectorAll('.color-btn').forEach(b => {
+        document.querySelectorAll('.color-opt').forEach(b => {
             b.onclick = () => { 
                 selectedColor = b.dataset.color;
                 updateColorUI();
