@@ -3,12 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Planner 2026">
-    <link rel="apple-touch-icon" href="logocalendar.png">
-    
     <title>Calendar Planner 2026</title>
     
     <style>
@@ -53,15 +49,10 @@
         }
         
         .day.other-month { opacity: 0.15; }
-        
-        /* BORDO GIORNO ATTUALE */
-        .day.is-today {
-            border: 2px solid var(--blue);
-        }
-        
+        .day.is-today { border: 2px solid var(--blue); }
         .day.fixed-day-bg { background-color: var(--yellow-faded) !important; color: #fff; }
         
-        /* GIOVEDÌ: Diagonale inversa (metà superiore sinistra colorata) */
+        /* GIOVEDÌ: Inversa (Giallo in alto a sinistra) */
         .day.fixed-day-half { 
             background: linear-gradient(135deg, var(--yellow-faded) 50%, var(--bg-secondary) 50%) !important; 
             color: #fff; 
@@ -152,6 +143,10 @@
         let currentDate = new Date(2026, 0, 1);
         let selectedDate = null, selectedColor = 'none';
 
+        // Carica dati da localStorage immediatamente come backup
+        const localData = localStorage.getItem('planner_data');
+        if (localData) dayEvents = JSON.parse(localData);
+
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBip() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -192,17 +187,13 @@
                 const y = currentDate.getFullYear(), m = currentDate.getMonth();
                 const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
                 document.getElementById('monthHeader').innerHTML = `${names[m]} <span class="year">${y}</span>`;
-                document.getElementById('prevBtn').disabled = (y === 2026 && m === 0);
-
+                
                 const start = new Date(y, m, 1);
                 let gap = (start.getDay() === 0) ? 6 : start.getDay() - 1;
                 const cursor = new Date(y, m, 1 - gap);
                 container.innerHTML = '';
                 const holidays = getHolidays(y);
-                
-                // Variabile per il giorno reale attuale
-                const today = new Date();
-                const todayStr = getDateString(today);
+                const todayStr = getDateString(new Date());
 
                 for (let i = 0; i < 42; i++) {
                     const iterDate = new Date(cursor);
@@ -214,11 +205,7 @@
                     const dayEl = document.createElement('div');
                     dayEl.className = 'day';
                     if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
-                    
-                    // Evidenzia se è oggi
-                    if (dStr === todayStr) {
-                        dayEl.classList.add('is-today');
-                    }
+                    if (dStr === todayStr) dayEl.classList.add('is-today');
 
                     if (hName && !userEv?.color) {
                         dayEl.classList.add('holiday-yellow');
@@ -243,19 +230,10 @@
             }, 100);
         }
 
-        // Swipe & Navigation
-        let touchstartX = 0; let touchendX = 0;
-        const swipeArea = document.getElementById('swipeArea');
-        swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, false);
-        swipeArea.addEventListener('touchend', e => { 
-            touchendX = e.changedTouches[0].screenX; 
-            if (touchendX < touchstartX - 50) { currentDate.setMonth(currentDate.getMonth() + 1); playBip(); renderCalendar(); }
-            if (touchendX > touchstartX + 50) { 
-                if (!(currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0)) {
-                    currentDate.setMonth(currentDate.getMonth() - 1); playBip(); renderCalendar();
-                }
-            }
-        }, false);
+        // Navigazione
+        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); playBip(); renderCalendar(); };
+        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); playBip(); renderCalendar(); };
+        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); playBip(); renderCalendar(); };
 
         function openModal(date, hName) {
             selectedDate = date;
@@ -270,20 +248,30 @@
         }
 
         function updateColorUI() { document.querySelectorAll('.color-opt').forEach(b => b.classList.toggle('selected', b.dataset.color === selectedColor)); }
+        
         async function saveEvent() {
             const dStr = getDateString(selectedDate);
             const note = document.getElementById('noteInput').value.trim();
             const data = { color: selectedColor === 'none' ? null : selectedColor, note: note || null };
+            
+            // 1. Salva in memoria locale
             dayEvents[dStr] = data;
-            if(db && currentUser) await db.collection('users').doc(currentUser.uid).collection('events').doc(dStr).set(data);
+            
+            // 2. Salva in LocalStorage (Permanenza sul dispositivo)
+            localStorage.setItem('planner_data', JSON.stringify(dayEvents));
+            
+            // 3. Salva in Firebase (Cloud)
+            if(db && currentUser) {
+                try {
+                    await db.collection('users').doc(currentUser.uid).collection('events').doc(dStr).set(data);
+                } catch(e) { console.log("Cloud save error, kept locally"); }
+            }
+            
             renderCalendar(); closeModal();
         }
+
         function deleteEntry() { document.getElementById('noteInput').value = ''; selectedColor = 'none'; saveEvent(); }
         function closeModal() { document.getElementById('modal').classList.remove('active'); document.getElementById('modal').style.display = 'none'; }
-
-        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); playBip(); renderCalendar(); };
-        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); playBip(); renderCalendar(); };
-        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); playBip(); renderCalendar(); };
 
         document.querySelectorAll('.color-opt').forEach(b => {
             b.onclick = () => { 
@@ -293,15 +281,31 @@
             };
         });
 
+        // Swipe
+        let touchstartX = 0;
+        const swipeArea = document.getElementById('swipeArea');
+        swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, false);
+        swipeArea.addEventListener('touchend', e => { 
+            let touchendX = e.changedTouches[0].screenX; 
+            if (touchendX < touchstartX - 50) { currentDate.setMonth(currentDate.getMonth() + 1); playBip(); renderCalendar(); }
+            if (touchendX > touchstartX + 50) { currentDate.setMonth(currentDate.getMonth() - 1); playBip(); renderCalendar(); }
+        }, false);
+
+        // Inizializzazione Firebase e Sincronizzazione
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         firebase.auth().signInAnonymously().then(u => {
             currentUser = u.user;
             db.collection('users').doc(currentUser.uid).collection('events').get().then(s => {
-                s.forEach(doc => dayEvents[doc.id] = doc.data());
-                renderCalendar();
+                if(!s.empty) {
+                    s.forEach(doc => dayEvents[doc.id] = doc.data());
+                    localStorage.setItem('planner_data', JSON.stringify(dayEvents));
+                    renderCalendar();
+                }
             });
-        });
+        }).catch(() => renderCalendar()); // Carica comunque i dati locali se offline
+
+        renderCalendar();
     </script>
 </body>
 </html>
