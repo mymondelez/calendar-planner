@@ -1,0 +1,11 @@
+.env
+.env.local
+firebase-config.js
+node_modules/
+package-lock.json
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
