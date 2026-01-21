@@ -3,15 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Planner 2026">
+    <link rel="apple-touch-icon" href="logocalendar.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="logocalendar.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="logocalendar.png">
+    <link rel="icon" type="image/png" href="logocalendar.png">
+    
     <title>Calendar Planner 2026</title>
     
     <style>
         * { 
             margin: 0; padding: 0; box-sizing: border-box; 
             -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
-            touch-action: pan-y; 
         }
         
         :root {
@@ -21,25 +27,36 @@
             --yellow-faded: rgba(204, 255, 0, 0.25);
         }
 
-        html, body { width: 100%; height: 100%; font-family: -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
-        .container { display: flex; flex-direction: column; height: 100vh; padding-top: env(safe-area-inset-top); }
+        html, body { 
+            width: 100%; height: 100%; 
+            font-family: -apple-system, sans-serif; 
+            background: var(--bg-primary); 
+            color: var(--text-primary); 
+            overflow: hidden; /* Blocca lo scroll della pagina intera */
+        }
+
+        .container { 
+            display: flex; flex-direction: column; 
+            height: 100vh; 
+            padding-top: env(safe-area-inset-top); 
+        }
 
         .header { padding: 20px 16px; display: flex; justify-content: space-between; align-items: flex-start; }
-        .header h1 { font-size: 28px; font-weight: 800; line-height: 1.1; display: flex; flex-direction: column; }
+        .header h1 { font-size: 28px; font-weight: 800; line-height: 1.1; }
         .header h1 span.year { font-size: 22px; color: var(--text-secondary); font-weight: 400; }
         .header-controls { display: flex; gap: 8px; align-items: center; }
         
         button { background: var(--bg-secondary); border: 1px solid var(--border-color); color: #fff; border-radius: 12px; font-weight: 600; touch-action: manipulation; }
-        button:disabled { opacity: 0.2; }
         .nav-btn { width: 48px; height: 48px; font-size: 20px; }
         .today-btn { height: 48px; padding: 0 15px; font-size: 14px; background: var(--blue); border: none; }
 
-        .calendar-wrapper { flex: 1; padding: 0 12px 20px 12px; display: flex; flex-direction: column; }
-        #daysContainer { transition: opacity 0.2s ease-in-out; opacity: 1; }
-        #daysContainer.fading { opacity: 0; }
-
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 10px; }
-        .weekday { text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); }
+        .calendar-wrapper { 
+            flex: 1; 
+            padding: 0 12px 20px 12px; 
+            display: flex; flex-direction: column;
+            overflow-y: auto; /* Permette lo scroll solo qui se necessario */
+            touch-action: pan-y; /* Permette il trascinamento verticale */
+        }
 
         .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
         .day { 
@@ -52,7 +69,7 @@
         .day.is-today { border: 2px solid var(--blue); }
         .day.fixed-day-bg { background-color: var(--yellow-faded) !important; color: #fff; }
         
-        /* GIOVEDÌ: Parte colorata in BASSO a DESTRA (Speculare a prima) */
+        /* GIOVEDÌ: Parte colorata in BASSO a DESTRA */
         .day.fixed-day-half { 
             background: linear-gradient(135deg, var(--bg-secondary) 50%, var(--yellow-faded) 50%) !important; 
             color: #fff; 
@@ -71,6 +88,10 @@
             text-transform: uppercase; white-space: nowrap; overflow: hidden;
         }
 
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 10px; }
+        .weekday { text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); }
+
+        /* Modal */
         .modal { 
             display: none; position: fixed; bottom: 0; left: 0; right: 0; 
             background: #1c1c1e; border-top: 1px solid #333; border-radius: 25px 25px 0 0; 
@@ -140,12 +161,9 @@
         };
 
         let db, currentUser, dayEvents = {};
+        // FORZA PARTENZA DA GENNAIO 2026
         let currentDate = new Date(2026, 0, 1);
         let selectedDate = null, selectedColor = 'none';
-
-        // Caricamento immediato da localStorage
-        const localData = localStorage.getItem('planner_data');
-        if (localData) dayEvents = JSON.parse(localData);
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBip() {
@@ -181,69 +199,72 @@
 
         function renderCalendar() {
             const container = document.getElementById('daysContainer');
-            container.classList.add('fading');
+            const y = currentDate.getFullYear(), m = currentDate.getMonth();
+            const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+            document.getElementById('monthHeader').innerHTML = `${names[m]} <span class="year">${y}</span>`;
+            
+            // Disabilita tasto indietro prima di Gennaio 2026
+            document.getElementById('prevBtn').disabled = (y === 2026 && m === 0);
 
-            setTimeout(() => {
-                const y = currentDate.getFullYear(), m = currentDate.getMonth();
-                const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-                document.getElementById('monthHeader').innerHTML = `${names[m]} <span class="year">${y}</span>`;
+            const start = new Date(y, m, 1);
+            let gap = (start.getDay() === 0) ? 6 : start.getDay() - 1;
+            const cursor = new Date(y, m, 1 - gap);
+            container.innerHTML = '';
+            const holidays = getHolidays(y);
+            const todayStr = getDateString(new Date());
+
+            for (let i = 0; i < 42; i++) {
+                const iterDate = new Date(cursor);
+                const dStr = getDateString(iterDate);
+                const dayOfWeek = iterDate.getDay(); 
+                const hName = holidays[dStr];
+                const userEv = dayEvents[dStr];
                 
-                const start = new Date(y, m, 1);
-                let gap = (start.getDay() === 0) ? 6 : start.getDay() - 1;
-                const cursor = new Date(y, m, 1 - gap);
-                container.innerHTML = '';
-                const holidays = getHolidays(y);
-                const todayStr = getDateString(new Date());
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day';
+                if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
+                if (dStr === todayStr) dayEl.classList.add('is-today');
 
-                for (let i = 0; i < 42; i++) {
-                    const iterDate = new Date(cursor);
-                    const dStr = getDateString(iterDate);
-                    const dayOfWeek = iterDate.getDay(); 
-                    const hName = holidays[dStr];
-                    const userEv = dayEvents[dStr];
-                    
-                    const dayEl = document.createElement('div');
-                    dayEl.className = 'day';
-                    if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
-                    if (dStr === todayStr) dayEl.classList.add('is-today');
-
-                    if (hName && !userEv?.color) {
-                        dayEl.classList.add('holiday-yellow');
-                    } 
-                    else if (iterDate.getMonth() === m && !userEv?.color) {
-                        if ([1, 5, 6, 0].includes(dayOfWeek)) dayEl.classList.add('fixed-day-bg');
-                        if (dayOfWeek === 4) dayEl.classList.add('fixed-day-half');
-                    }
-
-                    if (userEv?.color) {
-                        dayEl.classList.remove('fixed-day-bg', 'fixed-day-half', 'holiday-yellow');
-                        if (userEv.color === 'yellow') dayEl.classList.add('manual-yellow');
-                        else dayEl.classList.add(userEv.color);
-                    }
-
-                    dayEl.innerHTML = `<div class="day-number">${iterDate.getDate()}</div><div class="day-note">${userEv?.note || hName || ""}</div>`;
-                    if (iterDate.getMonth() === m) dayEl.onclick = () => { playBip(); openModal(iterDate, hName); };
-                    container.appendChild(dayEl);
-                    cursor.setDate(cursor.getDate() + 1);
+                if (hName && !userEv?.color) {
+                    dayEl.classList.add('holiday-yellow');
+                } 
+                else if (iterDate.getMonth() === m && !userEv?.color) {
+                    if ([1, 5, 6, 0].includes(dayOfWeek)) dayEl.classList.add('fixed-day-bg');
+                    if (dayOfWeek === 4) dayEl.classList.add('fixed-day-half');
                 }
-                container.classList.remove('fading');
-            }, 100);
-        }
 
-        async function saveEvent() {
-            const dStr = getDateString(selectedDate);
-            const note = document.getElementById('noteInput').value.trim();
-            const data = { color: selectedColor === 'none' ? null : selectedColor, note: note || null };
-            dayEvents[dStr] = data;
-            
-            localStorage.setItem('planner_data', JSON.stringify(dayEvents));
-            
-            if(db && currentUser) {
-                await db.collection('users').doc(currentUser.uid).collection('events').doc(dStr).set(data);
+                if (userEv?.color) {
+                    dayEl.classList.remove('fixed-day-bg', 'fixed-day-half', 'holiday-yellow');
+                    if (userEv.color === 'yellow') dayEl.classList.add('manual-yellow');
+                    else dayEl.classList.add(userEv.color);
+                }
+
+                dayEl.innerHTML = `<div class="day-number">${iterDate.getDate()}</div><div class="day-note">${userEv?.note || hName || ""}</div>`;
+                if (iterDate.getMonth() === m) dayEl.onclick = () => { playBip(); openModal(iterDate, hName); };
+                container.appendChild(dayEl);
+                cursor.setDate(cursor.getDate() + 1);
             }
-            renderCalendar(); closeModal();
         }
 
+        // Navigazione
+        document.getElementById('prevBtn').onclick = () => { 
+            if (!(currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0)) {
+                currentDate.setMonth(currentDate.getMonth()-1); playBip(); renderCalendar(); 
+            }
+        };
+        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); playBip(); renderCalendar(); };
+        document.getElementById('todayBtn').onclick = () => { 
+            // Torna a oggi, ma se oggi è prima del 2026, va a Gennaio 2026
+            let realToday = new Date();
+            if (realToday < new Date(2026, 0, 1)) {
+                currentDate = new Date(2026, 0, 1);
+            } else {
+                currentDate = realToday;
+            }
+            playBip(); renderCalendar(); 
+        };
+
+        // Modal Logic
         function openModal(date, hName) {
             selectedDate = date;
             const dStr = getDateString(date);
@@ -257,12 +278,19 @@
         }
 
         function updateColorUI() { document.querySelectorAll('.color-opt').forEach(b => b.classList.toggle('selected', b.dataset.color === selectedColor)); }
+        
+        async function saveEvent() {
+            const dStr = getDateString(selectedDate);
+            const note = document.getElementById('noteInput').value.trim();
+            const data = { color: selectedColor === 'none' ? null : selectedColor, note: note || null };
+            dayEvents[dStr] = data;
+            localStorage.setItem('planner_data', JSON.stringify(dayEvents));
+            if(db && currentUser) await db.collection('users').doc(currentUser.uid).collection('events').doc(dStr).set(data);
+            renderCalendar(); closeModal();
+        }
+
         function deleteEntry() { document.getElementById('noteInput').value = ''; selectedColor = 'none'; saveEvent(); }
         function closeModal() { document.getElementById('modal').classList.remove('active'); document.getElementById('modal').style.display = 'none'; }
-
-        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); playBip(); renderCalendar(); };
-        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); playBip(); renderCalendar(); };
-        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); playBip(); renderCalendar(); };
 
         document.querySelectorAll('.color-opt').forEach(b => {
             b.onclick = () => { 
@@ -271,6 +299,26 @@
                 if(selectedColor === 'red') document.getElementById('noteInput').value = "UFFICIO";
             };
         });
+
+        // Swipe migliorato (non interferisce con lo scroll verticale del calendario)
+        let touchstartX = 0;
+        const swipeArea = document.getElementById('swipeArea');
+        swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, {passive: true});
+        swipeArea.addEventListener('touchend', e => { 
+            let touchendX = e.changedTouches[0].screenX; 
+            if (touchendX < touchstartX - 70) { // Swipe sinistra -> Mese successivo
+                currentDate.setMonth(currentDate.getMonth() + 1); playBip(); renderCalendar(); 
+            }
+            if (touchendX > touchstartX + 70) { // Swipe destra -> Mese precedente
+                if (!(currentDate.getFullYear() === 2026 && currentDate.getMonth() === 0)) {
+                    currentDate.setMonth(currentDate.getMonth() - 1); playBip(); renderCalendar(); 
+                }
+            }
+        }, {passive: true});
+
+        // Inizializzazione
+        const localData = localStorage.getItem('planner_data');
+        if (localData) dayEvents = JSON.parse(localData);
 
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
