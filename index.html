@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#1a1a1a">
     <meta name="description" content="Calendar Planner - Pianifica la tua settimana">
     <title>Calendar Planner</title>
@@ -17,6 +17,13 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html {
+            touch-action: manipulation;
         }
 
         :root {
@@ -80,6 +87,8 @@
             font-size: 14px;
             font-weight: 500;
             transition: background-color 0.2s;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         button:active {
@@ -148,6 +157,7 @@
             position: relative;
             font-size: 14px;
             font-weight: 600;
+            gap: 4px;
         }
 
         .day:active {
@@ -160,14 +170,14 @@
         }
 
         .day.has-color {
-            border: 2px solid;
+            border: 1px solid;
         }
 
-        .day.red { background-color: rgba(255, 59, 48, 0.15); border-color: var(--red); }
-        .day.yellow { background-color: rgba(255, 204, 0, 0.15); border-color: var(--yellow); }
-        .day.orange { background-color: rgba(255, 149, 0, 0.15); border-color: var(--orange); }
-        .day.blue { background-color: rgba(0, 180, 216, 0.15); border-color: var(--blue); }
-        .day.green { background-color: rgba(0, 208, 132, 0.15); border-color: var(--green); }
+        .day.red { background-color: rgba(255, 59, 48, 0.3); border-color: var(--red); }
+        .day.yellow { background-color: rgba(255, 204, 0, 0.3); border-color: var(--yellow); }
+        .day.orange { background-color: rgba(255, 149, 0, 0.3); border-color: var(--orange); }
+        .day.blue { background-color: rgba(0, 180, 216, 0.3); border-color: var(--blue); }
+        .day.green { background-color: rgba(0, 208, 132, 0.3); border-color: var(--green); }
 
         .day-number {
             font-size: 16px;
@@ -175,11 +185,20 @@
             color: var(--text-primary);
         }
 
+        .day-note {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.2;
+            max-height: 20px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .day-indicator {
             width: 4px;
             height: 4px;
             border-radius: 50%;
-            margin-top: 2px;
         }
 
         .day.red .day-indicator { background-color: var(--red); }
@@ -356,27 +375,6 @@
             border: none;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border-color);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-right: 12px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         @media (max-width: 480px) {
             .header {
                 padding: 12px;
@@ -485,7 +483,6 @@
 
     <script>
         // ===== CONFIGURAZIONE FIREBASE =====
-        // LE TUE CREDENZIALI REALI DA FIREBASE CONSOLE
         const firebaseConfig = {
             apiKey: "AIzaSyAniuzRLuV09S2a1Rkoi1_FJgc528whGGc",
             authDomain: "calendar-planner-hey.firebaseapp.com",
@@ -507,14 +504,12 @@
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 
-                // Auth anonima
                 const auth = firebase.auth();
                 if (!auth.currentUser) {
                     await auth.signInAnonymously();
                 }
                 currentUser = auth.currentUser;
                 
-                // Carica i dati
                 await loadEvents();
                 renderCalendar();
                 
@@ -540,7 +535,6 @@
             '2026-12-26': 'Santo stefano',
         };
 
-        // Aggiungi festivi per altri anni
         function getHolidayKey(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -558,15 +552,11 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             
-            // Update header
             const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
                               'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
             document.getElementById('monthHeader').textContent = `${monthNames[month]} ${year}`;
 
-            // Calcola il primo giorno del mese (lunedì = 0)
             const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const daysInMonth = lastDay.getDate();
             const startDate = new Date(firstDay);
             startDate.setDate(startDate.getDate() - firstDay.getDay());
 
@@ -593,13 +583,20 @@
                     dayEl.classList.add(event.color, 'has-color');
                 }
 
+                let noteHtml = '';
+                if (event && event.note && !isHolidayDay) {
+                    noteHtml = `<div class="day-note">${event.note}</div>`;
+                } else if (event && event.color && !isHolidayDay) {
+                    noteHtml = '<div class="day-indicator"></div>';
+                }
+
                 dayEl.innerHTML = `
                     <div class="day-number">${date.getDate()}</div>
-                    ${(event && event.color && !isHolidayDay) ? '<div class="day-indicator"></div>' : ''}
+                    ${noteHtml}
                 `;
 
                 if (!isHolidayDay && isCurrentMonth) {
-                    dayEl.addEventListener('click', () => openModal(date));
+                    dayEl.addEventListener('click', () => openModal(new Date(date)));
                 }
 
                 daysContainer.appendChild(dayEl);
@@ -615,21 +612,19 @@
         }
 
         function openModal(date) {
-            selectedDate = date;
-            const dateStr = getDateString(date);
+            selectedDate = new Date(date);
+            const dateStr = getDateString(selectedDate);
             const event = dayEvents[dateStr] || {};
 
-            document.getElementById('modalDate').textContent = date.toLocaleDateString('it-IT', {
+            const formattedDate = selectedDate.toLocaleDateString('it-IT', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long'
-            }).charAt(0).toUpperCase() + date.toLocaleDateString('it-IT', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long'
-            }).slice(1);
+            });
+            const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+            
+            document.getElementById('modalDate').textContent = capitalizedDate;
 
-            // Set color
             document.querySelectorAll('.color-btn').forEach(btn => {
                 btn.classList.remove('selected');
                 if ((btn.dataset.color === 'none' && !event.color) ||
@@ -638,11 +633,9 @@
                 }
             });
 
-            // Set note
             document.getElementById('noteInput').value = event.note || '';
             updateCharCount();
 
-            // Show modal
             document.getElementById('modal').classList.add('active');
         }
 
@@ -668,7 +661,6 @@
 
             try {
                 if (db && currentUser) {
-                    // Salva su Firestore
                     const docRef = db.collection('users').doc(currentUser.uid)
                         .collection('events').doc(dateStr);
                     
@@ -679,7 +671,6 @@
                     }
                 }
 
-                // Update locale
                 if (!eventData.color && !eventData.note) {
                     delete dayEvents[dateStr];
                 } else {
@@ -771,7 +762,6 @@
         document.getElementById('saveBtn').addEventListener('click', saveEvent);
         document.getElementById('deleteBtn').addEventListener('click', deleteEvent);
 
-        // Close modal on outside click
         document.getElementById('modal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('modal')) {
                 closeModal();
@@ -783,7 +773,13 @@
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
         }
 
-        // Initialize
+        // Disabilita zoom da doppio tocco
+        document.addEventListener('touchmove', function(event) {
+            if (event.scale !== 1) {
+                event.preventDefault();
+            }
+        }, false);
+
         window.addEventListener('load', initFirebase);
     </script>
 </body>
