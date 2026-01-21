@@ -5,83 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Calendar Planner 2026</title>
+    <title>Calendar 2026</title>
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; user-select: none; }
         :root {
-            --bg-primary: #121212; --bg-secondary: #252525; --border-color: #3d3d3d;
-            --text-primary: #ffffff; --text-secondary: #a0a0a0;
-            /* Colori Intensi */
-            --red: #ff3b30; --yellow: #ccff00; --green: #34c759; --blue: #007aff;
+            --bg-primary: #000000; --bg-secondary: #1c1c1e; --border-color: #333;
+            --text-primary: #ffffff; --text-secondary: #888;
+            /* Colori Richiesti (Intensi) */
+            --red: #ff3b30; --yellow: #ccff00; --green: #28cd41; --blue: #007aff;
         }
-        html, body { width: 100%; height: 100%; font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
+        html, body { width: 100%; height: 100%; font-family: -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
         
         .container { display: flex; flex-direction: column; height: 100vh; padding-top: env(safe-area-inset-top); }
 
-        .header { padding: 20px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 24px; font-weight: 800; }
-        .header-controls { display: flex; gap: 10px; }
+        .header { padding: 15px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 22px; font-weight: 700; }
+        .header-controls { display: flex; gap: 8px; }
         
-        button { background: var(--bg-secondary); border: 1px solid var(--border-color); color: #fff; border-radius: 12px; font-weight: 600; cursor: pointer; }
-        .nav-btn { width: 50px; height: 50px; font-size: 22px; }
-        .today-btn { padding: 0 20px; font-size: 16px; background: var(--blue); border: none; }
+        button { background: var(--bg-secondary); border: 1px solid var(--border-color); color: #fff; border-radius: 10px; font-weight: 600; }
+        .nav-btn { width: 44px; height: 44px; font-size: 20px; }
+        .today-btn { padding: 0 15px; font-size: 15px; background: var(--blue); border: none; }
 
-        .calendar-wrapper { flex: 1; display: flex; flex-direction: column; padding: 10px 12px 30px 12px; }
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 10px; }
-        .weekday { text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); }
+        .calendar-wrapper { flex: 1; padding: 0 12px; }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 8px; }
+        .weekday { text-align: center; font-size: 10px; font-weight: 700; color: var(--text-secondary); }
 
-        /* Griglia Bloccata: 6 righe uguali */
+        /* GRIGLIA PERFETTAMENTE QUADRATA */
         .days { 
-            flex: 1; 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
-            grid-template-rows: repeat(6, 1fr); 
-            gap: 8px; 
+            gap: 6px; 
         }
         
         .day { 
+            aspect-ratio: 1 / 1; /* FORZA IL QUADRATO */
             background: var(--bg-secondary); 
             border: 1px solid var(--border-color); 
-            border-radius: 14px; 
+            border-radius: 8px; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center; 
-            padding: 4px;
+            position: relative;
             overflow: hidden;
         }
         
-        .day.other-month { opacity: 0.15; }
+        .day.other-month { opacity: 0.1; }
         
-        /* Colori Box più intensi */
-        .day.red { background-color: var(--red); border-color: #ff6b63; }
-        .day.yellow { background-color: var(--yellow); border-color: #e6ff80; color: #000; }
-        .day.green { background-color: var(--green); border-color: #63ff8b; }
-        .day.blue { background-color: var(--blue); border-color: #5cadff; }
+        /* Classi Colore Intense */
+        .day.red { background-color: var(--red) !important; color: #fff; }
+        .day.yellow { background-color: var(--yellow) !important; color: #000; }
+        .day.green { background-color: var(--green) !important; color: #fff; }
+        .day.blue { background-color: var(--blue) !important; color: #fff; }
         
-        .day-number { font-size: 17px; font-weight: 700; }
-        .day-note { font-size: 9px; font-weight: 800; text-align: center; margin-top: 2px; line-height: 1; }
-        .day.yellow .day-note { color: #000; }
+        .day-number { font-size: 18px; font-weight: 700; z-index: 2; }
+        
+        /* TESTO FESTIVITÀ: Non sposta il box, si adatta */
+        .day-note { 
+            position: absolute;
+            bottom: 4px;
+            left: 2px;
+            right: 2px;
+            font-size: 8px; 
+            font-weight: 800; 
+            text-align: center; 
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* Aggiunge ... se troppo lungo */
+            line-height: 1;
+        }
 
-        /* Modale */
+        /* MODALE */
         .modal { 
             display: none; position: fixed; bottom: 0; left: 0; right: 0; 
-            background: #1c1c1e; border-top: 1px solid var(--border-color); 
-            border-radius: 30px 30px 0 0; padding: 25px; z-index: 100;
-            padding-bottom: max(30px, env(safe-area-inset-bottom));
+            background: #1c1c1e; border-top: 1px solid #333; 
+            border-radius: 20px 20px 0 0; padding: 20px; z-index: 100;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
         }
-        .modal.active { display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal.active { display: flex; flex-direction: column; }
         
-        .color-picker { display: flex; justify-content: space-around; margin: 25px 0; }
-        .color-opt { width: 55px; height: 55px; border-radius: 50%; border: 3px solid transparent; }
-        .color-opt.selected { border-color: white; transform: scale(1.1); }
+        .color-picker { display: flex; justify-content: space-between; margin: 20px 0; }
+        .color-opt { width: 50px; height: 50px; border-radius: 50%; border: 2px solid transparent; }
+        .color-opt.selected { border: 3px solid white; transform: scale(1.1); }
 
-        .note-input { width: 100%; background: #2c2c2e; border: 1px solid var(--border-color); color: #fff; padding: 15px; border-radius: 15px; font-size: 18px; margin-bottom: 20px; outline: none; }
-        .modal-actions { display: flex; gap: 15px; }
-        .btn-save { flex: 2; background: var(--blue); padding: 18px; border-radius: 15px; border: none; font-size: 18px; font-weight: 700; color: #fff; }
-        .btn-del { flex: 1; background: rgba(255,59,48,0.2); color: var(--red); border: 1px solid var(--red); border-radius: 15px; }
+        .note-input { width: 100%; background: #2c2c2e; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 12px; font-size: 16px; margin-bottom: 15px; }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-save { flex: 2; background: var(--blue); padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: 700; color: #fff; }
+        .btn-del { flex: 1; background: #3a3a3c; color: var(--red); border-radius: 12px; border: none; }
     </style>
 </head>
 <body>
@@ -100,14 +112,14 @@
                 <div class="weekday">GIO</div><div class="weekday">VEN</div><div class="weekday">SAB</div>
                 <div class="weekday">DOM</div>
             </div>
-            <div class="days" id="daysContainer"></div>
+            <div id="daysContainer" class="days"></div>
         </div>
     </div>
 
-    <div class="modal" id="modal">
+    <div id="modal" class="modal">
         <div style="display:flex; justify-content:space-between; align-items:center">
-            <h2 id="modalDate" style="font-size:22px">Data</h2>
-            <button onclick="closeModal()" style="background:none; border:none; color:#fff; font-size:30px">✕</button>
+            <h2 id="modalDate">Data</h2>
+            <button onclick="closeModal()" style="background:none; border:none; color:#fff; font-size:24px">✕</button>
         </div>
         <div class="color-picker">
             <div class="color-opt" data-color="red" style="background:var(--red)"></div>
@@ -116,7 +128,7 @@
             <div class="color-opt" data-color="blue" style="background:var(--blue)"></div>
             <div class="color-opt" data-color="none" style="background:none; border:2px dashed #666"></div>
         </div>
-        <textarea id="noteInput" class="note-input" placeholder="Aggiungi nota..."></textarea>
+        <input type="text" id="noteInput" class="note-input" placeholder="Nota (es. Ufficio)">
         <div class="modal-actions">
             <button class="btn-del" onclick="deleteEntry()">Elimina</button>
             <button class="btn-save" onclick="saveEvent()">SALVA</button>
@@ -143,18 +155,17 @@
 
         function getEaster(y) {
             const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451);
-            const mo=Math.floor((h+l-7*m+114)/31), da=((h+l-7*m+114)%31)+1;
-            return new Date(y,mo-1,da);
+            return new Date(y,Math.floor((h+l-7*m+114)/31)-1,((h+l-7*m+114)%31)+1);
         }
 
         function getHolidays(y) {
             const e = getEaster(y); const a = new Date(e); a.setDate(e.getDate() + 1);
             return {
-                [`${y}-01-01`]: "Capodanno", [`${y}-01-06`]: "Epifania", [`${y}-04-25`]: "Liberazione",
-                [`${y}-05-01`]: "F. Lavoro", [`${y}-06-02`]: "F. Repubbl.", [`${y}-08-15`]: "Ferragosto",
-                [`${y}-10-04`]: "S. Francesco", [`${y}-11-01`]: "Ognissanti", [`${y}-12-08`]: "Immacolata", 
-                [`${y}-12-25`]: "Natale", [`${y}-12-26`]: "S. Stefano", 
-                [getDateString(e)]: "Pasqua", [getDateString(a)]: "Lun. Angelo"
+                [`${y}-01-01`]: "Capodanno", [`${y}-01-06`]: "Epifania", [`${y}-04-25`]: "Liberaz.",
+                [`${y}-05-01`]: "Lavoro", [`${y}-06-02`]: "Repubblica", [`${y}-08-15`]: "Ferrag.",
+                [`${y}-10-04`]: "S. Fran.", [`${y}-11-01`]: "Ogniss.", [`${y}-12-08`]: "Immac.", 
+                [`${y}-12-25`]: "Natale", [`${y}-12-26`]: "S. Stef.", 
+                [getDateString(e)]: "Pasqua", [getDateString(a)]: "Angelo"
             };
         }
 
@@ -164,7 +175,6 @@
             const y = currentDate.getFullYear(), m = currentDate.getMonth();
             const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
             document.getElementById('monthHeader').textContent = `${names[m]} ${y}`;
-            document.getElementById('prevBtn').disabled = (y === 2026 && m === 0);
 
             const start = new Date(y, m, 1);
             let gap = (start.getDay() === 0) ? 6 : start.getDay() - 1;
@@ -182,6 +192,7 @@
 
                 const hName = holidays[dStr];
                 const userEv = dayEvents[dStr];
+                
                 if (userEv?.color) dayEl.classList.add(userEv.color);
                 else if (hName) dayEl.classList.add('yellow');
 
@@ -197,16 +208,15 @@
             const dStr = getDateString(date);
             const ev = dayEvents[dStr] || {};
             document.getElementById('modalDate').textContent = date.toLocaleDateString('it-IT',{day:'numeric',month:'long'});
-            document.getElementById('noteInput').value = ev.note || hName || "";
+            document.getElementById('noteInput').value = ev.note || (hName === "Liberaz." ? "Liberazione" : hName) || "";
             selectedColor = ev.color || (hName ? 'yellow' : 'none');
             updateColorUI();
+            document.getElementById('modal').style.display = 'block';
             document.getElementById('modal').classList.add('active');
         }
 
         function updateColorUI() {
-            document.querySelectorAll('.color-opt').forEach(b => {
-                b.classList.toggle('selected', b.dataset.color === selectedColor);
-            });
+            document.querySelectorAll('.color-opt').forEach(b => b.classList.toggle('selected', b.dataset.color === selectedColor));
         }
 
         async function saveEvent() {
@@ -219,23 +229,17 @@
         }
 
         function deleteEntry() { document.getElementById('noteInput').value = ''; selectedColor = 'none'; saveEvent(); }
-        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
         document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); renderCalendar(); };
         document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); renderCalendar(); };
-        document.getElementById('todayBtn').onclick = () => { 
-            const now = new Date();
-            currentDate = (now < new Date(2026,0,1)) ? new Date(2026,0,1) : new Date(now.getFullYear(), now.getMonth(), 1);
-            renderCalendar(); 
-        };
+        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); renderCalendar(); };
 
         document.querySelectorAll('.color-opt').forEach(b => {
             b.onclick = () => { 
                 selectedColor = b.dataset.color;
                 updateColorUI();
-                if(selectedColor === 'red' && (!document.getElementById('noteInput').value || document.getElementById('noteInput').value.length > 15)) {
-                    document.getElementById('noteInput').value = "Ufficio";
-                }
+                if(selectedColor === 'red') document.getElementById('noteInput').value = "Ufficio";
             };
         });
 
