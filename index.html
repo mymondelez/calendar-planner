@@ -6,216 +6,78 @@
     <meta name="theme-color" content="#1a1a1a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="Calendar Planner - Pianifica la tua settimana">
-    <title>Calendar Planner</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231a1a1a' width='192' height='192'/><text x='96' y='120' font-size='100' fill='%23fff' text-anchor='middle' font-weight='bold'>📅</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%231a1a1a' width='180' height='180'/><text x='90' y='135' font-size='90' fill='%23fff' text-anchor='middle' font-weight='bold'>📅</text></svg>">
+    <title>Calendar Planner 2026+</title>
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent; /* Rimuove il flash grigio al tocco su iOS */
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         html { touch-action: manipulation; }
-
         :root {
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2d2d2d;
-            --text-primary: #ffffff;
-            --text-secondary: #999999;
-            --border-color: #404040;
-            --red: #ff3b30;
-            --yellow: #ffcc00;
-            --orange: #ff9500;
-            --blue: #00b4d8;
-            --green: #00d084;
-            --accent: #0a84ff;
+            --bg-primary: #1a1a1a; --bg-secondary: #2d2d2d; --text-primary: #ffffff; --text-secondary: #999999;
+            --border-color: #404040; --red: #ff3b30; --yellow: #ffcc00; --orange: #ff9500; --blue: #00b4d8; --green: #00d084; --accent: #0a84ff;
         }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            overflow: hidden;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: var(--bg-primary);
-        }
-
-        .header {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header h1 { font-size: 28px; font-weight: 700; }
-
+        html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
+        .container { display: flex; flex-direction: column; height: 100vh; max-width: 600px; margin: 0 auto; background-color: var(--bg-primary); }
+        .header { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; font-weight: 700; }
         .header-controls { display: flex; gap: 8px; align-items: center; }
-
-        button {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-
-        button:active { opacity: 0.7; }
-
+        button { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
         .today-btn { background: var(--accent); border: none; color: white; padding: 6px 12px; font-size: 12px; }
-
         .calendar-wrapper { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
-
-        .month-header { text-align: center; margin-bottom: 24px; font-size: 18px; font-weight: 600; color: var(--text-secondary); }
-
         .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 12px; }
-
-        .weekday { text-align: center; font-size: 12px; font-weight: 600; color: var(--text-secondary); padding: 8px 0; }
-
+        .weekday { text-align: center; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
         .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 24px; }
-
-        .day {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            cursor: pointer;
-            padding: 8px;
-            transition: all 0.2s;
-            position: relative;
-            font-size: 14px;
-            font-weight: 600;
-            gap: 4px;
-        }
-
-        .day.other-month { opacity: 0.3; cursor: default; }
-        .day.has-color { border: 1px solid; }
-
-        .day.red { background-color: rgba(255, 59, 48, 0.3); border-color: var(--red); }
-        .day.yellow { background-color: rgba(255, 204, 0, 0.3); border-color: var(--yellow); }
-        .day.orange { background-color: rgba(255, 149, 0, 0.3); border-color: var(--orange); }
-        .day.blue { background-color: rgba(0, 180, 216, 0.3); border-color: var(--blue); }
-        .day.green { background-color: rgba(0, 208, 132, 0.3); border-color: var(--green); }
-
-        .day-number { font-size: 16px; font-weight: 700; color: var(--text-primary); }
-        .day-note { font-size: 10px; color: var(--text-secondary); text-align: center; line-height: 1.2; max-height: 20px; overflow: hidden; text-overflow: ellipsis; }
-        .day-indicator { width: 4px; height: 4px; border-radius: 50%; }
-
-        .modal {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--bg-secondary);
-            border-top: 1px solid var(--border-color);
-            border-radius: 20px 20px 0 0;
-            padding: 24px;
-            z-index: 100;
-            max-height: 85vh;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease-out;
-        }
-
+        .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; cursor: pointer; padding: 4px; position: relative; font-size: 14px; font-weight: 600; gap: 2px; }
+        .day.other-month { opacity: 0.15; }
+        .day.red { background-color: rgba(255, 59, 48, 0.6); border-color: var(--red); }
+        .day.yellow { background-color: rgba(255, 204, 0, 0.4); border-color: var(--yellow); }
+        .day-number { font-size: 15px; z-index: 2; }
+        .day-note { font-size: 9px; color: #fff; text-align: center; line-height: 1; max-width: 100%; overflow: hidden; font-weight: bold; z-index: 2; white-space: nowrap; text-overflow: ellipsis; }
+        
+        .modal { display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-secondary); border-top: 1px solid var(--border-color); border-radius: 20px 20px 0 0; padding: 24px; z-index: 100; animation: slideUp 0.3s; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
         .modal.active { display: flex; flex-direction: column; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-header h2 { font-size: 24px; font-weight: 700; }
-
-        .close-btn { background: none; border: none; font-size: 24px; color: var(--text-primary); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
-
-        .modal-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 12px; display: block; }
-
-        .color-picker { display: flex; gap: 12px; flex-wrap: wrap; }
-        .color-btn { width: 48px; height: 48px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; position: relative; }
-        .color-btn.selected { border-color: var(--text-primary); box-shadow: 0 0 0 2px var(--bg-secondary), 0 0 0 4px var(--text-primary); }
-        .color-btn.selected::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; color: white; }
-
-        .note-input { width: 100%; background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; font-size: 16px; /* 16px evita zoom automatico su iOS */ font-family: inherit; resize: none; -webkit-user-select: text; user-select: text; }
-
+        .note-input { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; font-size: 16px; margin-top: 15px; }
         .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-        .modal-actions button { flex: 1; padding: 14px; }
-        .save-btn { background-color: var(--accent); color: white; border: none; }
-        .delete-btn { background-color: rgba(255, 59, 48, 0.2); color: var(--red); border-color: var(--red); }
-
-        @supports (padding: max(0px)) {
-            .header { padding-top: max(16px, env(safe-area-inset-top)); }
-            .modal { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
-        }
+        .save-btn { flex: 2; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; }
+        .delete-btn { flex: 1; background: rgba(255, 59, 48, 0.2); color: var(--red); border: 1px solid var(--red); border-radius: 8px; }
+        
+        .color-picker button.selected { border: 2px solid white; transform: scale(1.1); }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Calendario</h1>
+            <h1 id="monthHeader">Mese Anno</h1>
             <div class="header-controls">
-                <button class="today-btn" id="todayBtn">Oggi</button>
                 <button id="prevBtn">←</button>
+                <button class="today-btn" id="todayBtn">Oggi</button>
                 <button id="nextBtn">→</button>
             </div>
         </div>
         <div class="calendar-wrapper">
-            <div class="month-header" id="monthHeader"></div>
             <div class="weekdays">
-                <div class="weekday">Lun</div><div class="weekday">Mar</div><div class="weekday">Mer</div>
-                <div class="weekday">Gio</div><div class="weekday">Ven</div><div class="weekday">Sab</div>
-                <div class="weekday">Dom</div>
+                <div class="weekday">L</div><div class="weekday">M</div><div class="weekday">M</div>
+                <div class="weekday">G</div><div class="weekday">V</div><div class="weekday">S</div><div class="weekday">D</div>
             </div>
             <div class="days" id="daysContainer"></div>
         </div>
     </div>
 
     <div class="modal" id="modal">
-        <div class="modal-header">
-            <h2 id="modalDate"></h2>
-            <button class="close-btn" id="closeBtn">✕</button>
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center">
+            <h2 id="modalDate">Data</h2>
+            <button onclick="closeModal()" style="border:none; background:none; font-size:24px; color:#fff; padding: 5px;">✕</button>
         </div>
-        <div class="modal-section">
-            <label class="modal-label">Colore</label>
-            <div class="color-picker" id="colorPicker">
-                <button class="color-btn none" data-color="none" style="background:var(--bg-secondary); border:2px dashed var(--border-color)"></button>
-                <button class="color-btn red" data-color="red" style="background:var(--red)"></button>
-                <button class="color-btn yellow" data-color="yellow" style="background:var(--yellow)"></button>
-                <button class="color-btn orange" data-color="orange" style="background:var(--orange)"></button>
-                <button class="color-btn blue" data-color="blue" style="background:var(--blue)"></button>
-                <button class="color-btn green" data-color="green" style="background:var(--green)"></button>
-            </div>
+        <div class="color-picker" id="modalColorPicker" style="display:flex; gap:15px; margin: 25px 0;">
+            <button class="color-btn" data-color="red" style="background:var(--red); width:45px; height:45px; border-radius:50%; border:none;"></button>
+            <button class="color-btn" data-color="yellow" style="background:var(--yellow); width:45px; height:45px; border-radius:50%; border:none;"></button>
+            <button class="color-btn" data-color="none" style="background:var(--bg-primary); width:45px; height:45px; border-radius:50%; border:1px dashed #666;"></button>
         </div>
-        <div class="modal-section">
-            <label class="modal-label">Nota (max 50 car.)</label>
-            <textarea class="note-input" id="noteInput" maxlength="50" rows="2" placeholder="Aggiungi nota..."></textarea>
-            <div style="text-align:right; font-size:12px; color:var(--text-secondary); margin-top:5px;"><span id="charCount">0</span>/50</div>
-        </div>
+        <textarea id="noteInput" class="note-input" maxlength="50" placeholder="Scrivi una nota..."></textarea>
         <div class="modal-actions">
-            <button class="delete-btn" id="deleteBtn">Elimina</button>
-            <button class="save-btn" id="saveBtn">Salva</button>
+            <button class="delete-btn" onclick="deleteEntry()">Elimina</button>
+            <button class="save-btn" onclick="saveEvent()">SALVA</button>
         </div>
     </div>
 
@@ -233,137 +95,123 @@
             appId: "1:1001939176543:web:8ba24dc1f90b95fb861fea"
         };
 
-        let db, currentUser = null;
-        let currentDate = new Date();
+        let db, currentUser, dayEvents = {};
+        let currentDate = new Date(2026, 0, 1);
         let selectedDate = null;
-        let dayEvents = {};
+        let selectedColor = 'none';
 
-        async function initFirebase() {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                const auth = firebase.auth();
-                if (!auth.currentUser) await auth.signInAnonymously();
-                currentUser = auth.currentUser;
-                await loadEvents();
-                renderCalendar();
-            } catch (e) {
-                console.error(e);
-                renderCalendar();
-            }
+        // Calcolo Pasqua
+        function getEaster(year) {
+            const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+            return new Date(year, month - 1, day);
         }
 
-        function getDateString(date) {
-            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        function getHolidays(year) {
+            const easter = getEaster(year);
+            const angel = new Date(easter); angel.setDate(easter.getDate() + 1);
+            return {
+                [`${year}-01-01`]: "Capodanno", [`${year}-01-06`]: "Epifania", [`${year}-04-25`]: "Liberazione",
+                [`${year}-05-01`]: "Lavoro", [`${year}-06-02`]: "Repubblica", [`${year}-08-15`]: "Ferragosto",
+                [`${year}-10-04`]: "S. Francesco", [`${year}-11-01`]: "Ognissanti", [`${year}-12-08`]: "Immacolata", 
+                [`${year}-12-25`]: "Natale", [`${year}-12-26`]: "S. Stefano", 
+                [getDateString(easter)]: "Pasqua", [getDateString(angel)]: "Lunedì dell'Angelo"
+            };
         }
+
+        function getDateString(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
         function renderCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
-            document.getElementById('monthHeader').textContent = `${monthNames[month]} ${year}`;
+            const y = currentDate.getFullYear(), m = currentDate.getMonth();
+            const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+            document.getElementById('monthHeader').textContent = `${names[m]} ${y}`;
+            document.getElementById('prevBtn').disabled = (y === 2026 && m === 0);
 
-            const firstDay = new Date(year, month, 1);
-            let dayOfWeek = firstDay.getDay(); 
-            dayOfWeek = (dayOfWeek === 0) ? 6 : dayOfWeek - 1; // Normalizza Lunedì come 0
-            
-            const startDate = new Date(year, month, 1 - dayOfWeek);
-            const daysContainer = document.getElementById('daysContainer');
-            daysContainer.innerHTML = '';
+            const start = new Date(y, m, 1);
+            let gap = start.getDay(); gap = (gap === 0) ? 6 : gap - 1;
+            const cursor = new Date(y, m, 1 - gap);
+            const container = document.getElementById('daysContainer');
+            container.innerHTML = '';
 
-            let dateCursor = new Date(startDate);
+            const holidays = getHolidays(y);
+
             for (let i = 0; i < 42; i++) {
-                const iterationDate = new Date(dateCursor); // Snapshot della data per questa cella
-                const dateStr = getDateString(iterationDate);
+                const iterDate = new Date(cursor);
+                const dStr = getDateString(iterDate);
                 const dayEl = document.createElement('div');
-                
                 dayEl.className = 'day';
-                if (iterationDate.getMonth() !== month) dayEl.classList.add('other-month');
-                if (dateStr === getDateString(new Date())) dayEl.style.borderColor = 'var(--accent)';
+                if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
 
-                const event = dayEvents[dateStr];
-                if (event && event.color) dayEl.classList.add(event.color, 'has-color');
+                const holidayName = holidays[dStr];
+                const userEv = dayEvents[dStr];
 
-                let noteHtml = (event && event.note) ? `<div class="day-note">${event.note}</div>` : (event && event.color ? '<div class="day-indicator"></div>' : '');
+                if (userEv?.color) dayEl.classList.add(userEv.color);
+                else if (holidayName) dayEl.classList.add('yellow');
 
-                dayEl.innerHTML = `<div class="day-number">${iterationDate.getDate()}</div>${noteHtml}`;
+                const note = userEv?.note || holidayName || "";
+                dayEl.innerHTML = `<div class="day-number">${iterDate.getDate()}</div><div class="day-note">${note}</div>`;
                 
-                // Evento click con data corretta
-                if (iterationDate.getMonth() === month) {
-                    dayEl.addEventListener('click', () => openModal(iterationDate));
-                }
-
-                daysContainer.appendChild(dayEl);
-                dateCursor.setDate(dateCursor.getDate() + 1);
+                if (iterDate.getMonth() === m) dayEl.onclick = () => openModal(iterDate, holidayName);
+                container.appendChild(dayEl);
+                cursor.setDate(cursor.getDate() + 1);
             }
         }
 
-        function openModal(date) {
-            selectedDate = new Date(date);
-            const dateStr = getDateString(selectedDate);
-            const event = dayEvents[dateStr] || {};
-
-            const formatted = selectedDate.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
-            document.getElementById('modalDate').textContent = formatted.charAt(0).toUpperCase() + formatted.slice(1);
-            document.getElementById('noteInput').value = event.note || '';
-            
-            document.querySelectorAll('.color-btn').forEach(btn => {
-                btn.classList.toggle('selected', (btn.dataset.color === (event.color || 'none')));
-            });
-
+        function openModal(date, hName) {
+            selectedDate = date;
+            const dStr = getDateString(date);
+            const ev = dayEvents[dStr] || {};
+            document.getElementById('modalDate').textContent = date.toLocaleDateString('it-IT',{day:'numeric',month:'long'});
+            document.getElementById('noteInput').value = ev.note || hName || "";
+            selectedColor = ev.color || (hName ? 'yellow' : 'none');
+            updateColorSelection();
             document.getElementById('modal').classList.add('active');
-            updateCharCount();
         }
 
-        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+        function updateColorSelection() {
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.color === selectedColor);
+            });
+        }
 
         async function saveEvent() {
-            if (!selectedDate) return;
-            const dateStr = getDateString(selectedDate);
-            const color = document.querySelector('.color-btn.selected').dataset.color;
+            const dStr = getDateString(selectedDate);
             const note = document.getElementById('noteInput').value.trim();
-
-            const data = { color: color === 'none' ? null : color, note: note || null };
-            
-            try {
-                if (db && currentUser) {
-                    const ref = db.collection('users').doc(currentUser.uid).collection('events').doc(dateStr);
-                    (!data.color && !data.note) ? await ref.delete() : await ref.set(data);
-                }
-                (!data.color && !data.note) ? delete dayEvents[dateStr] : dayEvents[dateStr] = data;
-                renderCalendar();
-                closeModal();
-            } catch (e) { alert("Errore salvataggio"); }
+            const data = { color: selectedColor === 'none' ? null : selectedColor, note: note || null };
+            dayEvents[dStr] = data;
+            if(db && currentUser) await db.collection('users').doc(currentUser.uid).collection('events').doc(dStr).set(data);
+            renderCalendar(); closeModal();
         }
 
-        async function loadEvents() {
-            if (!db || !currentUser) return;
-            const snap = await db.collection('users').doc(currentUser.uid).collection('events').get();
-            snap.forEach(doc => dayEvents[doc.id] = doc.data());
-        }
+        function deleteEntry() { document.getElementById('noteInput').value = ''; selectedColor = 'none'; saveEvent(); }
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
-        function updateCharCount() { document.getElementById('charCount').textContent = document.getElementById('noteInput').value.length; }
-
-        // Listeners
-        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
-        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
-        document.getElementById('todayBtn').onclick = () => { currentDate = new Date(); renderCalendar(); };
-        document.getElementById('closeBtn').onclick = closeModal;
-        document.getElementById('saveBtn').onclick = saveEvent;
-        document.getElementById('deleteBtn').onclick = async () => {
-            document.getElementById('noteInput').value = '';
-            document.querySelector('.color-btn.none').click();
-            await saveEvent();
+        document.getElementById('prevBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()-1); renderCalendar(); };
+        document.getElementById('nextBtn').onclick = () => { currentDate.setMonth(currentDate.getMonth()+1); renderCalendar(); };
+        document.getElementById('todayBtn').onclick = () => { 
+            const now = new Date();
+            currentDate = (now < new Date(2026,0,1)) ? new Date(2026,0,1) : new Date(now.getFullYear(), now.getMonth(), 1);
+            renderCalendar(); 
         };
-        document.getElementById('noteInput').oninput = updateCharCount;
-        document.querySelectorAll('.color-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
+
+        document.querySelectorAll('.color-btn').forEach(b => {
+            b.onclick = () => { 
+                selectedColor = b.dataset.color;
+                updateColorSelection();
+                if(selectedColor === 'red' && (!document.getElementById('noteInput').value || document.getElementById('noteInput').value === "S. Francesco")) {
+                    document.getElementById('noteInput').value = "Ufficio";
+                }
             };
         });
 
-        window.onload = initFirebase;
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebase.auth().signInAnonymously().then(u => {
+            currentUser = u.user;
+            db.collection('users').doc(currentUser.uid).collection('events').get().then(s => {
+                s.forEach(doc => dayEvents[doc.id] = doc.data());
+                renderCalendar();
+            });
+        });
     </script>
 </body>
 </html>
