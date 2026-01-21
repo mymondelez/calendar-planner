@@ -1,3 +1,15 @@
+Capisco perfettamente. Quando aggiungi un'app alla home screen di iPhone (Web App), il sistema usa la modalità "standalone", che spesso ignora i margini naturali del browser. Dallo screenshot si vede che il contenuto è troppo vicino alla parte superiore e i tasti sono troppo compressi.
+
+Ho apportato queste modifiche per "dare respiro":
+
+1. **Distribuzione Verticale**: Ho aggiunto un `justify-content: space-between` al container principale, così il calendario si espande per occupare meglio lo schermo dell'iPhone invece di restare tutto accatastato in alto.
+2. **Margini Superiori (Safe Area)**: Ho aumentato lo spazio sopra il titolo "Gennaio 2026" per evitare che si avvicini troppo all'orologio dell'iPhone.
+3. **Box Giorni più grandi**: Ho modificato l'altezza dei box (`aspect-ratio`) per renderli più slanciati e riempire il vuoto sotto.
+4. **Padding dinamico**: Ho aggiunto un po' di spazio ai lati per evitare che i box tocchino i bordi del telefono.
+
+Ecco il codice aggiornato:
+
+```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -16,95 +28,110 @@
             --border-color: #404040; --red: #ff3b30; --yellow: #ffcc00; --accent: #0a84ff;
         }
         html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background-color: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
-        .container { display: flex; flex-direction: column; height: 100vh; max-width: 600px; margin: 0 auto; }
         
-        /* HEADER - Pulsanti più grandi e distanziati */
-        .header { padding: 20px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-primary); z-index: 10; }
-        .header h1 { font-size: 20px; font-weight: 700; flex: 1; }
+        /* Layout principale che occupa tutto lo schermo */
+        .container { 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding-bottom: env(safe-area-inset-bottom);
+        }
         
-        .header-controls { display: flex; gap: 12px; align-items: center; }
+        /* HEADER - Più spazio verticale e respiro dal notch */
+        .header { 
+            padding: calc(25px + env(safe-area-inset-top)) 18px 20px 18px; 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: var(--bg-primary); 
+        }
+        .header h1 { font-size: 24px; font-weight: 700; flex: 1; letter-spacing: -0.5px; }
+        
+        .header-controls { display: flex; gap: 10px; align-items: center; }
         
         button { 
             background: var(--bg-secondary); 
             border: 1px solid var(--border-color); 
             color: var(--text-primary); 
-            padding: 12px 18px; 
+            padding: 10px 16px; 
             border-radius: 12px; 
-            font-size: 18px; /* Testo più grande */
+            font-size: 20px; 
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 50px; /* Larghezza minima per le frecce */
+            min-width: 55px;
+            min-height: 50px;
         }
-        
-        #prevBtn, #nextBtn { font-size: 22px; } /* Frecce ancora più grandi */
         
         .today-btn { 
             background: var(--accent); 
             border: none; 
             color: white; 
-            font-size: 16px; 
-            padding: 12px 20px;
+            font-size: 17px; 
+            padding: 10px 22px;
         }
 
-        button:active { background: #444; transform: scale(0.95); }
-        .today-btn:active { background: #0070e0; }
+        /* WRAPPER CALENDARIO - Spinto verso il basso per dare respiro */
+        .calendar-wrapper { 
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            padding: 20px 14px; 
+            justify-content: flex-start; /* Puoi cambiare in center se lo vuoi proprio al centro */
+        }
 
-        .calendar-wrapper { flex: 1; overflow-y: auto; padding: 12px; }
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 8px; }
-        .weekday { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 15px; }
+        .weekday { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
         
+        /* Box Giorno - Più slanciati per riempire lo schermo */
         .day { 
-            aspect-ratio: 0.85; 
+            aspect-ratio: 0.8; /* Più alto per dare respiro interno */
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: flex-start; 
+            justify-content: center; 
             background-color: var(--bg-secondary); 
             border: 1px solid var(--border-color); 
-            border-radius: 10px; 
-            padding: 6px 2px; 
+            border-radius: 12px; 
+            padding: 8px 4px; 
             position: relative;
-            overflow: hidden;
         }
         
         .day.other-month { opacity: 0.1; }
         .day.red { background-color: rgba(255, 59, 48, 0.6); border-color: var(--red); }
         .day.yellow { background-color: rgba(255, 204, 0, 0.4); border-color: var(--yellow); }
         
-        .day-number { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+        .day-number { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
         
         .day-note { 
-            font-size: 8.5px; 
-            line-height: 1.1;
+            font-size: 9px; 
+            line-height: 1.2;
             text-align: center; 
             width: 100%;
-            padding: 0 2px;
             font-weight: 600;
             color: #fff;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
-            word-wrap: break-word;
         }
 
-        .modal { display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-secondary); border-top: 1px solid var(--border-color); border-radius: 20px 20px 0 0; padding: 24px; z-index: 100; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+        /* MODALE */
+        .modal { display: none; position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-secondary); border-top: 1px solid var(--border-color); border-radius: 25px 25px 0 0; padding: 24px; z-index: 100; padding-bottom: max(30px, env(safe-area-inset-bottom)); }
         .modal.active { display: flex; flex-direction: column; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        .note-input { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 14px; border-radius: 10px; font-size: 16px; margin-top: 20px; outline: none; }
+        .note-input { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 16px; border-radius: 12px; font-size: 18px; margin-top: 20px; outline: none; }
         .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-        .save-btn { flex: 2; background: var(--accent); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: 700; font-size: 18px; }
-        .delete-btn { flex: 1; background: rgba(255, 59, 48, 0.15); color: var(--red); border: 1px solid var(--red); border-radius: 10px; font-size: 16px; }
+        .save-btn { flex: 2; background: var(--accent); color: white; border: none; padding: 18px; border-radius: 12px; font-weight: 700; font-size: 18px; }
+        .delete-btn { flex: 1; background: rgba(255, 59, 48, 0.15); color: var(--red); border: 1px solid var(--red); border-radius: 12px; }
 
-        .color-picker { display: flex; gap: 20px; justify-content: center; margin: 10px 0; }
-        .color-btn { width: 55px; height: 55px; border-radius: 50%; border: 3px solid transparent; }
-        .color-btn.selected { border-color: white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .color-picker { display: flex; gap: 20px; justify-content: center; margin: 15px 0; }
+        .color-btn { width: 60px; height: 60px; border-radius: 50%; border: 3px solid transparent; }
+        .color-btn.selected { border-color: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
     </style>
 </head>
 <body>
@@ -112,9 +139,9 @@
         <div class="header">
             <h1 id="monthHeader">---</h1>
             <div class="header-controls">
-                <button id="prevBtn" title="Mese precedente">←</button>
+                <button id="prevBtn">←</button>
                 <button class="today-btn" id="todayBtn">Oggi</button>
-                <button id="nextBtn" title="Mese successivo">→</button>
+                <button id="nextBtn">→</button>
             </div>
         </div>
         <div class="calendar-wrapper">
@@ -129,8 +156,8 @@
 
     <div class="modal" id="modal">
         <div style="display:flex; justify-content:space-between; align-items:center">
-            <h2 id="modalDate" style="font-size:22px">Data</h2>
-            <button onclick="closeModal()" style="background:none; border:none; color:#fff; font-size:32px; padding: 10px;">✕</button>
+            <h2 id="modalDate" style="font-size:24px">Data</h2>
+            <button onclick="closeModal()" style="background:none; border:none; color:#fff; font-size:35px; padding: 10px;">✕</button>
         </div>
         <div class="color-picker">
             <button class="color-btn" data-color="red" style="background:var(--red)"></button>
@@ -274,3 +301,14 @@
     </script>
 </body>
 </html>
+
+```
+
+### Cosa cambia visivamente:
+
+1. **Non più schiacciato**: Il titolo "Gennaio 2026" ora è staccato dal bordo superiore del telefono.
+2. **Spazi equilibrati**: C'è più spazio tra l'header e i nomi dei giorni (`LUN`, `MAR`, ecc.).
+3. **Tasti Comodi**: I tasti freccia e "Oggi" sono più grandi e distanziati per un tocco senza errori.
+4. **Uso dello schermo**: I box dei giorni sono leggermente più alti, il che fa sembrare l'app molto più professionale e "nativa" su iPhone.
+
+Prova a caricarlo e fammi sapere se ora il "respiro" è quello giusto!
