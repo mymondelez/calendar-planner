@@ -24,44 +24,67 @@
         
         .container { display: flex; flex-direction: column; height: 100vh; padding-top: env(safe-area-inset-top); }
 
-        .header { padding: 20px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 26px; font-weight: 800; }
-        .header-controls { display: flex; gap: 10px; }
+        /* HEADER: Mese e Anno su due righe */
+        .header { padding: 20px 16px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .header h1 { 
+            font-size: 28px; font-weight: 800; line-height: 1.1; 
+            display: flex; flex-direction: column; 
+        }
+        .header h1 span.year { font-size: 22px; color: var(--text-secondary); font-weight: 400; }
+        
+        .header-controls { display: flex; gap: 8px; align-items: center; }
         
         button { background: var(--bg-secondary); border: 1px solid var(--border-color); color: #fff; border-radius: 12px; font-weight: 600; touch-action: manipulation; }
-        .nav-btn { width: 55px; height: 55px; font-size: 24px; }
-        .today-btn { padding: 0 20px; font-size: 16px; background: var(--blue); border: none; }
+        .nav-btn { width: 48px; height: 48px; font-size: 20px; }
+        .today-btn { height: 48px; padding: 0 15px; font-size: 14px; background: var(--blue); border: none; }
 
+        /* Area Calendario con Effetto Fade */
         .calendar-wrapper { flex: 1; padding: 0 12px 20px 12px; display: flex; flex-direction: column; }
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 12px; }
-        .weekday { text-align: center; font-size: 12px; font-weight: 800; color: var(--text-secondary); }
-
-        .days { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); gap: 8px; }
         
-        .day { 
-            background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            position: relative; overflow: hidden;
+        #daysContainer { 
+            transition: opacity 0.3s ease-in-out; 
+            opacity: 1;
+        }
+        #daysContainer.fading { opacity: 0; }
+
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 10px; }
+        .weekday { text-align: center; font-size: 11px; font-weight: 800; color: var(--text-secondary); }
+
+        /* BOX RETTANGOLARI ARMONICI */
+        .days { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 6px; 
         }
         
-        .day.other-month { opacity: 0.1; }
+        .day { 
+            aspect-ratio: 4 / 5; /* Rende il box rettangolare ma non troppo lungo */
+            background: var(--bg-secondary); 
+            border: 1px solid var(--border-color); 
+            border-radius: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+            overflow: hidden;
+        }
         
-        /* FESTIVITÀ AUTOMATICHE (Tutte Giallo Pieno) */
+        .day.other-month { opacity: 0.15; }
         .day.holiday-yellow { background-color: var(--yellow) !important; color: #000; }
-
-        /* COLORI MANUALI */
         .day.red { background: var(--red) !important; color: #fff; }
         .day.green { background: var(--green) !important; color: #fff; }
         .day.blue { background: var(--blue) !important; color: #fff; }
         .day.manual-yellow { background: var(--yellow) !important; color: #000; }
         
-        .day-number { font-size: 20px; font-weight: 700; z-index: 2; position: relative; }
+        .day-number { font-size: 18px; font-weight: 700; z-index: 2; }
         .day-note { 
-            position: absolute; bottom: 6px; left: 2px; right: 2px;
-            font-size: 8.5px; font-weight: 800; text-align: center; 
+            position: absolute; bottom: 5px; left: 2px; right: 2px;
+            font-size: 8px; font-weight: 800; text-align: center; 
             text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
+        /* Modale */
         .modal { 
             display: none; position: fixed; bottom: 0; left: 0; right: 0; 
             background: #1c1c1e; border-top: 1px solid #333; border-radius: 25px 25px 0 0; 
@@ -70,7 +93,7 @@
         .modal.active { display: flex; flex-direction: column; }
         .note-input { width: 100%; background: #2c2c2e; border: 1px solid #444; color: #fff; padding: 15px; border-radius: 12px; font-size: 16px; margin-bottom: 20px; }
         .color-picker { display: flex; justify-content: space-between; margin-bottom: 25px; }
-        .color-opt { width: 55px; height: 55px; border-radius: 50%; border: 3px solid transparent; }
+        .color-opt { width: 52px; height: 52px; border-radius: 50%; border: 3px solid transparent; }
         .color-opt.selected { border-color: white; transform: scale(1.1); }
         .modal-actions { display: flex; gap: 12px; }
         .btn-save { flex: 2; background: var(--blue); padding: 18px; border-radius: 15px; border: none; font-size: 18px; font-weight: 700; color: #fff; }
@@ -153,54 +176,56 @@
         function getDateString(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
         function renderCalendar() {
-            const y = currentDate.getFullYear(), m = currentDate.getMonth();
-            const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-            document.getElementById('monthHeader').textContent = `${names[m]} ${y}`;
-
-            const start = new Date(y, m, 1);
-            let gap = (start.getDay() === 0) ? 6 : start.getDay() - 1;
-            const cursor = new Date(y, m, 1 - gap);
             const container = document.getElementById('daysContainer');
-            container.innerHTML = '';
-            const holidays = getHolidays(y);
+            container.classList.add('fading'); // Inizia il fade out
 
-            for (let i = 0; i < 42; i++) {
-                const iterDate = new Date(cursor);
-                const dStr = getDateString(iterDate);
-                const hName = holidays[dStr];
-                const userEv = dayEvents[dStr];
+            setTimeout(() => {
+                const y = currentDate.getFullYear(), m = currentDate.getMonth();
+                const names = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
                 
-                const dayEl = document.createElement('div');
-                dayEl.className = 'day';
-                if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
+                // Mese e Anno su due righe
+                document.getElementById('monthHeader').innerHTML = `${names[m]} <span class="year">${y}</span>`;
 
-                // Festività: Sempre Giallo Pieno se non c'è un colore manuale
-                if (hName && !userEv?.color) {
-                    dayEl.classList.add('holiday-yellow');
+                const start = new Date(y, m, 1);
+                let gap = (start.getDay() === 0) ? 6 : start.getDay() - 1;
+                const cursor = new Date(y, m, 1 - gap);
+                container.innerHTML = '';
+                const holidays = getHolidays(y);
+
+                for (let i = 0; i < 42; i++) {
+                    const iterDate = new Date(cursor);
+                    const dStr = getDateString(iterDate);
+                    const hName = holidays[dStr];
+                    const userEv = dayEvents[dStr];
+                    
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'day';
+                    if (iterDate.getMonth() !== m) dayEl.classList.add('other-month');
+
+                    if (hName && !userEv?.color) dayEl.classList.add('holiday-yellow');
+                    if (userEv?.color) {
+                        if (userEv.color === 'yellow') dayEl.classList.add('manual-yellow');
+                        else dayEl.classList.add(userEv.color);
+                    }
+
+                    dayEl.innerHTML = `<div class="day-number">${iterDate.getDate()}</div><div class="day-note">${userEv?.note || hName || ""}</div>`;
+                    if (iterDate.getMonth() === m) dayEl.onclick = () => openModal(iterDate, hName);
+                    container.appendChild(dayEl);
+                    cursor.setDate(cursor.getDate() + 1);
                 }
-
-                // Colore Manuale (priorità)
-                if (userEv?.color) {
-                    if (userEv.color === 'yellow') dayEl.classList.add('manual-yellow');
-                    else dayEl.classList.add(userEv.color);
-                }
-
-                dayEl.innerHTML = `<div class="day-number">${iterDate.getDate()}</div><div class="day-note">${userEv?.note || hName || ""}</div>`;
-                if (iterDate.getMonth() === m) dayEl.onclick = () => openModal(iterDate, hName);
-                container.appendChild(dayEl);
-                cursor.setDate(cursor.getDate() + 1);
-            }
+                container.classList.remove('fading'); // Fine fade in
+            }, 150);
         }
 
-        // Swipe
+        // Swipe Management
         let touchstartX = 0; let touchendX = 0;
         const swipeArea = document.getElementById('swipeArea');
         swipeArea.addEventListener('touchstart', e => touchstartX = e.changedTouches[0].screenX, false);
-        swipeArea.addEventListener('touchend', e => { touchendX = e.changedTouches[0].screenX; handleSwipe(); }, false);
-        function handleSwipe() {
+        swipeArea.addEventListener('touchend', e => { 
+            touchendX = e.changedTouches[0].screenX; 
             if (touchendX < touchstartX - 50) { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); }
             if (touchendX > touchstartX + 50) { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); }
-        }
+        }, false);
 
         function openModal(date, hName) {
             selectedDate = date;
